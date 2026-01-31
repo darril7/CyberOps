@@ -1,0 +1,50 @@
+---
+- name: Pull device list from FortiGate (DHCP leases) and export for correlation
+  hosts: fortigates
+  gather_facts: no
+  collections:
+    - fortinet.fortios
+
+  vars:
+    # These will come from Semaphore Environment variables
+    out_dir: "{{ semaphore_export_dir | default('./exports') }}"
+    fortigate_vdom: "{{ fortigate_vdom | default('root') }}"
+    fortigate_interface: "{{ fortigate_interface | default('internal') }}"
+    fortigate_access_token: "{{ fortigate_access_token }}"
+
+  tasks:
+    - name: Query FortiGate DHCP leases
+      fortinet.fortios.fortios_monitor_fact:
+        vdom: "{{ fortigate_vdom }}"
+        access_token: "{{ fortigate_access_token }}"
+        selector: "system_dhcp"
+        params:
+          interface: "{{ fortigate_interface }}"
+          ipv6: false
+          scope: "vdom"
+      register: dhcp_raw
+
+    - name: Normalize results
+      ansible.builtin.set_fact:
+        fortigate_devices: >-
+          {{
+            (dhcp_raw.meta.results | default([]))
+            | map('combine', {'source':'fortigate_dhcp', 'vdom': fortigate_vdom, 'interface': fortigate_interface})
+            | list
+          }}
+
+    - name: Ensure output folder exists on runner
+      ansible.builtin.file:
+        path: "{{ out_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Write normalized output JSON on runner
+      ansible.builtin.copy:
+        dest: "{{ out_dir }}/fortigate_{{ inventory_hostname }}_dhcp_devices.json"
+        content: "{{ fortigate_devices | to_nice_json }}"
+        mode: "0644"
+
+    - name: Show count in logs
+      ansible.builtin.debug:
+        msg: "Exported {{ fortigate_devices | length }} DHCP lease records to {{ out_dir }}/fortigate_{{ inventory_hostname }}_dhcp_devices.json"
