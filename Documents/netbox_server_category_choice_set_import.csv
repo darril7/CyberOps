@@ -1,0 +1,22 @@
+name,value,label,description,weight
+server_category_code,INF-01,INF-01 Hypervisor,Server category INF-01 Hypervisor,100
+server_category_code,INF-02,INF-02 Storage,Server category INF-02 Storage,100
+server_category_code,INF-03,INF-03 Backup Infra,Server category INF-03 Backup Infra,100
+server_category_code,INF-04,INF-04 Network Infra,Server category INF-04 Network Infra,100
+server_category_code,INF-05,INF-05 Physical Host,Server category INF-05 Physical Host,100
+server_category_code,CORE-01,CORE-01 Identity,Server category CORE-01 Identity,100
+server_category_code,CORE-02,CORE-02 DNS/DHCP/NTP,Server category CORE-02 DNS/DHCP/NTP,100
+server_category_code,CORE-03,CORE-03 PKI,Server category CORE-03 PKI,100
+server_category_code,CORE-04,CORE-04 Auth Proxy,Server category CORE-04 Auth Proxy,100
+server_category_code,APP-01,APP-01 App Server,Server category APP-01 App Server,100
+server_category_code,APP-02,APP-02 Web Server,Server category APP-02 Web Server,100
+server_category_code,APP-03,APP-03 Runtime/Middleware,Server category APP-03 Runtime/Middleware,100
+server_category_code,APP-04,APP-04 API/Integration,Server category APP-04 API/Integration,100
+server_category_code,APP-05,APP-05 Batch/Scheduler,Server category APP-05 Batch/Scheduler,100
+server_category_code,DATA-01,DATA-01 Database,Server category DATA-01 Database,100
+server_category_code,DATA-02,DATA-02 File Server,Server category DATA-02 File Server,100
+server_category_code,DATA-03,DATA-03 BI/Reporting,Server category DATA-03 BI/Reporting,100
+server_category_code,DATA-04,DATA-04 ETL/Data Processing,Server category DATA-04 ETL/Data Processing,100
+server_category_code,SEC-01,SEC-01 SIEM/Logging,Server category SEC-01 SIEM/Logging,100
+server_category_code,SEC-02,SEC-02 Security Management,Server category SEC-02 Security Management,100
+server_category_code,SEC-03,SEC-03 Bastion/Jump,Server category SEC-03 Bastion/Jump,100
