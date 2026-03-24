@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tool Applicability Matrix</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:           #f5f6f8;
+    --surface:      #ffffff;
+    --border:       #e3e7ee;
+    --text:         #1c2030;
+    --muted:        #68758f;
+    --yes-bg:       #e4f2ea;
+    --yes-fg:       #165c33;
+    --yes-bd:       #9fd4b4;
+    --cond-bg:      #fff4e0;
+    --cond-fg:      #7a4f00;
+    --cond-bd:      #f0c96a;
+    --no-fg:        #c8cdd8;
+    --c-server:     #ddeeff;
+    --c-server-h:   #1a56c9;
+    --c-server-t:   #e8f2ff;
+    --c-ws:         #fde8e6;
+    --c-ws-h:       #b53020;
+    --c-ws-t:       #fff4f3;
+    --c-appl:       #f0e8fd;
+    --c-appl-h:     #6b1fa8;
+    --c-appl-t:     #f8f0ff;
+    --c-vm:         #e2f5ed;
+    --c-vm-h:       #0a6e4a;
+    --c-vm-t:       #f0fbf5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    padding: 28px 20px 48px;
+  }
+
+  header {
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  header p  { font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-top: 3px; }
+
+  .nb-note {
+    font-size: 11px;
+    background: #fffbf0;
+    border: 1px solid #f0d080;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #6a5000;
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1.5;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .l-badge {
+    width: 24px; height: 20px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+  }
+
+  /* Table */
+  .wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  /* top color bar */
+  thead tr.bar th { height: 5px; padding: 0; border: none; }
+  thead tr.bar th.c-server { background: var(--c-server-h); opacity: 0.5; }
+  thead tr.bar th.c-ws     { background: var(--c-ws-h);     opacity: 0.5; }
+  thead tr.bar th.c-appl   { background: var(--c-appl-h);   opacity: 0.5; }
+  thead tr.bar th.c-vm     { background: var(--c-vm-h);     opacity: 0.5; }
+  thead tr.bar th.empty    { background: transparent; }
+
+  /* column headers */
+  thead tr.cols th {
+    padding: 11px 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    white-space: nowrap;
+  }
+  thead tr.cols th.tool-col { text-align: left; padding-left: 16px; min-width: 210px; color: var(--text); font-size: 11px; }
+  thead tr.cols th.c-server { color: var(--c-server-h); background: var(--c-server-t); }
+  thead tr.cols th.c-ws     { color: var(--c-ws-h);     background: var(--c-ws-t); }
+  thead tr.cols th.c-appl   { color: var(--c-appl-h);   background: var(--c-appl-t); }
+  thead tr.cols th.c-vm     { color: var(--c-vm-h);     background: var(--c-vm-t); }
+
+  /* netbox source sub-header */
+  thead tr.source th {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 3px 8px 6px;
+    border-bottom: 2px solid var(--border);
+    text-align: center;
+    letter-spacing: 0;
+  }
+  thead tr.source th.tool-col { text-align: left; padding-left: 16px; }
+  thead tr.source th.c-server,
+  thead tr.source th.c-ws,
+  thead tr.source th.c-appl   { background: var(--c-server-t); color: var(--muted); }
+  thead tr.source th.c-server { background: var(--c-server-t); }
+  thead tr.source th.c-ws     { background: var(--c-ws-t); }
+  thead tr.source th.c-appl   { background: var(--c-appl-t); }
+  thead tr.source th.c-vm     { background: var(--c-vm-t); }
+
+  /* section rows */
+  tr.section td {
+    background: var(--bg);
+    padding: 5px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* data rows */
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fafbfd; }
+
+  td.tool-name { padding: 9px 12px 9px 16px; vertical-align: middle; }
+  .tool-row { display: flex; align-items: center; gap: 9px; }
+  .tag {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 3px; color: #fff;
+    flex-shrink: 0; min-width: 50px; text-align: center;
+  }
+  .tinfo { display: flex; flex-direction: column; gap: 1px; }
+  .tinfo .name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .tinfo .cf   { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+
+  td.cell {
+    text-align: center; vertical-align: middle;
+    padding: 8px 4px; width: 100px;
+  }
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 22px; border-radius: 4px;
+    font-size: 13px; font-weight: 600; cursor: default;
+  }
+  .badge.yes  { background: var(--yes-bg); color: var(--yes-fg); border: 1px solid var(--yes-bd); }
+  .badge.cond { background: var(--cond-bg); color: var(--cond-fg); border: 1px solid var(--cond-bd); font-size: 10px; }
+  .badge.no   { background: transparent; color: var(--no-fg); border: none; font-size: 18px; font-weight: 300; }
+  .cond-note  { font-size: 10px; color: var(--cond-fg); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; display: block; }
+
+  /* Notes grid */
+  .notes {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .note .nt { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .note p   { font-size: 12px; line-height: 1.6; color: var(--text); }
+  .note code {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    background: var(--bg); padding: 1px 4px; border-radius: 3px; color: #1a56c9;
+  }
+
+  .tooltip { position: relative; }
+  .tooltip:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: #1c2030; color: #fff; font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+    padding: 4px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none; z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Tool applicability matrix</h1>
+    <p>benchmark layer 1 — physical devices (dcim) + virtual machines (virtualization)</p>
+  </div>
+  <div class="nb-note">
+    dcim/devices → device_type: server | workstation | appliance<br>
+    virtualization/virtual-machines → separate Netbox object, no device_type
+  </div>
+</header>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="l-badge" style="background:var(--yes-bg);border:1px solid var(--yes-bd);color:var(--yes-fg);">✓</div>
+    Applicable
+  </div>
+  <div class="legend-item">
+    <div class="l-badge" style="background:var(--cond-bg);border:1px solid var(--cond-bd);color:var(--cond-fg);font-size:10px;">W</div>
+    Windows OS only
+  </div>
+  <div class="legend-item">
+    <div class="l-badge" style="color:var(--no-fg);font-size:18px;font-weight:300;">—</div>
+    Not applicable (benchmark)
+  </div>
+</div>
+
+<div class="wrap">
+<table>
+  <thead>
+    <tr class="bar">
+      <th class="empty"></th>
+      <th class="c-server"></th>
+      <th class="c-ws"></th>
+      <th class="c-appl"></th>
+      <th class="c-vm"></th>
+    </tr>
+    <tr class="cols">
+      <th class="tool-col">Tool · Netbox custom field</th>
+      <th class="c-server">Server</th>
+      <th class="c-ws">Workstation</th>
+      <th class="c-appl">Appliance</th>
+      <th class="c-vm">Virtual Machine</th>
+    </tr>
+    <tr class="source">
+      <th class="tool-col"></th>
+      <th class="c-server">dcim/devices</th>
+      <th class="c-ws">dcim/devices</th>
+      <th class="c-appl">dcim/devices</th>
+      <th class="c-vm">virtualization/virtual-machines</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr class="section"><td colspan="5">Identity &amp; directory</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#1a73e8;">AD</span>
+        <div class="tinfo"><span class="name">Active Directory</span><span class="cf">cf_ad_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="domain-joined servers">✓</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="domain-joined workstations">✓</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell">
+        <span class="badge cond tooltip" data-tip="Windows VMs only — checks OS field">W</span>
+        <span class="cond-note">Win only</span>
+      </td>
+    </tr>
+
+    <tr class="section"><td colspan="5">Endpoint security</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#e53935;">AV/EDR</span>
+        <div class="tinfo"><span class="name">Trellix</span><span class="cf">cf_trellix_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="agent runs on VMs, any OS">✓</span></td>
+    </tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#8e24aa;">DLP/UAM</span>
+        <div class="tinfo"><span class="name">Teramind</span><span class="cf">cf_teramind_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge no tooltip" data-tip="benchmark exclusion — no user session">—</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="workstations only — named user required">✓</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge no tooltip" data-tip="benchmark exclusion — headless">—</span></td>
+    </tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#c2185b;">MDM</span>
+        <div class="tinfo"><span class="name">MDM</span><span class="cf">cf_mdm_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="managed laptops enrolled in Intune/Jamf">✓</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+    </tr>
+
+    <tr class="section"><td colspan="5">Patch management</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#1565c0;">PATCH</span>
+        <div class="tinfo"><span class="name">WSUS</span><span class="cf">cf_wsus_last_seen</span></div>
+      </div></td>
+      <td class="cell">
+        <span class="badge cond tooltip" data-tip="Windows servers only — checks OS field">W</span>
+        <span class="cond-note">Win only</span>
+      </td>
+      <td class="cell">
+        <span class="badge cond tooltip" data-tip="Windows workstations only — checks OS field">W</span>
+        <span class="cond-note">Win only</span>
+      </td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell">
+        <span class="badge cond tooltip" data-tip="Windows VMs only — checks OS field">W</span>
+        <span class="cond-note">Win only</span>
+      </td>
+    </tr>
+
+    <tr class="section"><td colspan="5">SIEM &amp; monitoring</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#2e7d32;">HIDS</span>
+        <div class="tinfo"><span class="name">Wazuh</span><span class="cf">cf_wazuh_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge no tooltip" data-tip="no agent support for network appliances">—</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="cross-platform agent">✓</span></td>
+    </tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#00838f;">SIEM</span>
+        <div class="tinfo"><span class="name">Elastic</span><span class="cf">cf_elastic_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge no tooltip" data-tip="Beats agent not deployed on network appliances">—</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+    </tr>
+
+    <tr class="section"><td colspan="5">Vulnerability management</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#e65100;">VULN</span>
+        <div class="tinfo"><span class="name">Nessus</span><span class="cf">cf_nessus_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="agentless — scans any IP including appliances">✓</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+    </tr>
+
+    <tr class="section"><td colspan="5">Network security</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#f57c00;">FW/UTM</span>
+        <div class="tinfo"><span class="name">FortiGate</span><span class="cf">cf_fortigate_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="FortiGate is itself the appliance">✓</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+    </tr>
+
+    <tr class="section"><td colspan="5">Infrastructure</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#00695c;">VIRT</span>
+        <div class="tinfo"><span class="name">vCenter</span><span class="cf">cf_vcenter_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="ESXi physical hosts registered as servers">✓</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge no">—</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="guest VMs as Netbox VM objects">✓</span></td>
+    </tr>
+
+    <tr class="section"><td colspan="5">Asset management</td></tr>
+    <tr>
+      <td class="tool-name"><div class="tool-row">
+        <span class="tag" style="background:#546e7a;">ITSM</span>
+        <div class="tinfo"><span class="name">GLPI</span><span class="cf">cf_glpi_last_seen</span></div>
+      </div></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+      <td class="cell"><span class="badge yes tooltip" data-tip="GLPI tracks all assets including appliances">✓</span></td>
+      <td class="cell"><span class="badge yes">✓</span></td>
+    </tr>
+
+  </tbody>
+</table>
+</div>
+
+<div class="notes">
+  <div class="note">
+    <div class="nt">Two Netbox queries per run</div>
+    <p>The runner calls <code>dcim/devices</code> filtered by <code>device_type</code> for physical devices, then <code>virtualization/virtual-machines</code> for VMs. Both are scoped to <code>tenant + site</code> from the playbook.</p>
+  </div>
+  <div class="note">
+    <div class="nt">W — Windows condition</div>
+    <p>AD and WSUS check the Netbox OS field before writing. If the device runs Linux, the runner skips the field update without error — it just logs <em>skipped: os_family=linux</em>.</p>
+  </div>
+  <div class="note">
+    <div class="nt">Teramind — benchmark exclusion</div>
+    <p>Servers and VMs are permanently excluded. This is not a client override — it's in <code>field_map.yaml</code> as a hard rule. No client can override it here; they'd need a separate tool entry.</p>
+  </div>
+  <div class="note">
+    <div class="nt">Nessus — ip_address fallback</div>
+    <p>Nessus returns IPs, not always hostnames. The runner matches by hostname first; if no match, it falls back to <code>primary_ip</code> in Netbox. Appliances often only match this way.</p>
+  </div>
+  <div class="note">
+    <div class="nt">Client layer override</div>
+    <p>This matrix is benchmark defaults. Per-client exclusions (e.g. "no Teramind on VIP workstations") go in <code>playbook.yaml</code> under <code>rules:</code> — they never modify this file.</p>
+  </div>
+  <div class="note">
+    <div class="nt">GLPI — universal fallback</div>
+    <p>Only tool covering all four object types. Use <code>cf_glpi_last_seen</code> as the existence check for appliances and any device type where no other tool has coverage.</p>
+  </div>
+</div>
+
+</body>
+</html>

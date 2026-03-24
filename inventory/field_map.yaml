@@ -1,0 +1,219 @@
+# =============================================================================
+# field_map.yaml — Tool applicability + Netbox field mapping
+# =============================================================================
+#
+# Netbox has TWO separate object types the runner must query:
+#
+#   Physical devices  → GET /api/dcim/devices/
+#                        filtered by tenant, site, device_type slug
+#                        device_type slugs used here: server | workstation | appliance
+#
+#   Virtual machines  → GET /api/virtualization/virtual-machines/
+#                        filtered by tenant, site (cluster)
+#                        no device_type — vm: true flag used below
+#
+# applicable_device_types  → which physical device_type slugs this tool covers
+# applicable_vms           → true if tool also covers Netbox VM objects
+# vm_condition             → optional: only apply to VMs matching this OS filter
+#
+# match_key   → script return dict key used to look up the Netbox device
+# fields      → script key : netbox custom field name
+# =============================================================================
+
+# ── Identity & directory ──────────────────────────────────────────────────────
+
+ad:
+  category: identity
+  description: "Active Directory — domain-joined devices"
+  match_key: hostname
+  applicable_device_types:
+    - server
+    - workstation
+  applicable_vms: true
+  vm_condition:
+    os_family: windows            # skip Linux VMs — not domain joined
+  fields:
+    ad_last_seen:       cf_ad_last_seen
+    ad_os:              cf_ad_os
+    ad_ou:              cf_ad_ou
+    ad_enabled:         cf_ad_enabled
+    ad_dns_name:        cf_ad_dns_name
+  not_applicable:
+    - appliance                   # network appliances are not domain joined
+
+# ── Endpoint security ─────────────────────────────────────────────────────────
+
+trellix:
+  category: av-edr
+  description: "Trellix — AV/EDR agent"
+  match_key: hostname
+  applicable_device_types:
+    - server
+    - workstation
+  applicable_vms: true            # agent runs on VMs regardless of OS
+  fields:
+    trellix_last_seen:  cf_trellix_last_seen
+    trellix_av_status:  cf_trellix_av_status
+    trellix_dat_date:   cf_trellix_dat_date
+    trellix_agent_ver:  cf_trellix_agent_ver
+  not_applicable:
+    - appliance
+
+teramind:
+  category: dlp-uam
+  description: "Teramind — user activity monitoring, workstations only (benchmark)"
+  match_key: hostname
+  applicable_device_types:
+    - workstation                 # permanent benchmark exclusion for servers
+  applicable_vms: false           # no interactive user session on VMs
+  fields:
+    teramind_last_seen:     cf_teramind_last_seen
+    teramind_status:        cf_teramind_status
+    teramind_last_user:     cf_teramind_last_user
+  not_applicable:
+    - server
+    - appliance
+
+mdm:
+  category: mdm
+  description: "MDM — Intune/Jamf managed laptops and mobile"
+  match_key: hostname
+  applicable_device_types:
+    - workstation
+  applicable_vms: false
+  fields:
+    mdm_last_seen:      cf_mdm_last_seen
+    mdm_compliance:     cf_mdm_compliance
+    mdm_os_version:     cf_mdm_os_version
+    mdm_enrolled:       cf_mdm_enrolled
+  not_applicable:
+    - server
+    - appliance
+
+# ── Patch management ──────────────────────────────────────────────────────────
+
+wsus:
+  category: patch
+  description: "WSUS — Windows patch management"
+  match_key: hostname
+  applicable_device_types:
+    - server
+    - workstation
+  applicable_vms: true
+  vm_condition:
+    os_family: windows            # WSUS only covers Windows
+  device_condition:
+    os_family: windows            # physical servers/WS: also check OS
+  fields:
+    wsus_last_seen:     cf_wsus_last_seen
+    wsus_patch_status:  cf_wsus_patch_status
+    wsus_missing_kbs:   cf_wsus_missing_kbs
+    wsus_last_scan:     cf_wsus_last_scan
+    wsus_target_type:   cf_wsus_target_type
+  not_applicable:
+    - appliance
+
+# ── SIEM & monitoring ─────────────────────────────────────────────────────────
+
+wazuh:
+  category: hids
+  description: "Wazuh — HIDS agent, cross-platform"
+  match_key: hostname
+  applicable_device_types:
+    - server
+    - workstation
+  applicable_vms: true
+  fields:
+    wazuh_last_seen:    cf_wazuh_last_seen
+    wazuh_agent_id:     cf_wazuh_agent_id
+    wazuh_agent_ver:    cf_wazuh_agent_ver
+    wazuh_status:       cf_wazuh_status
+  not_applicable:
+    - appliance
+
+elastic:
+  category: siem-log
+  description: "Elastic — log shipper (Beats/agent)"
+  match_key: hostname
+  applicable_device_types:
+    - server
+    - workstation
+  applicable_vms: true
+  fields:
+    elastic_last_seen:  cf_elastic_last_seen
+    elastic_agent_ver:  cf_elastic_agent_ver
+    elastic_status:     cf_elastic_status
+  not_applicable:
+    - appliance
+
+# ── Vulnerability management ──────────────────────────────────────────────────
+
+nessus:
+  category: vulnerability
+  description: "Nessus — agentless network scanner, broadest coverage"
+  match_key: hostname
+  match_fallback: ip_address      # Nessus returns IPs — fallback if no hostname match
+  applicable_device_types:
+    - server
+    - workstation
+    - appliance                   # scans anything with an IP
+  applicable_vms: true
+  fields:
+    nessus_last_seen:   cf_nessus_last_seen
+    nessus_last_scan:   cf_nessus_last_scan
+    nessus_severity:    cf_nessus_severity
+    nessus_score:       cf_nessus_score
+
+# ── Network & security appliances ─────────────────────────────────────────────
+
+fortigate:
+  category: firewall-utm
+  description: "FortiGate — firewall and UTM appliances only"
+  match_key: hostname
+  applicable_device_types:
+    - appliance
+  applicable_vms: false
+  fields:
+    fortigate_last_seen:    cf_fortigate_last_seen
+    fortigate_version:      cf_fortigate_version
+    fortigate_ha_status:    cf_fortigate_ha_status
+  not_applicable:
+    - server
+    - workstation
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+
+vcenter:
+  category: virtualization
+  description: "vCenter — ESXi physical hosts + guest VMs"
+  match_key: hostname
+  applicable_device_types:
+    - server                      # ESXi physical hosts registered as devices
+  applicable_vms: true            # guest VMs registered as Netbox VM objects
+  fields:
+    vcenter_last_seen:  cf_vcenter_last_seen
+    vcenter_power:      cf_vcenter_power_state
+    vcenter_host:       cf_vcenter_host
+    vcenter_cluster:    cf_vcenter_cluster
+  not_applicable:
+    - workstation
+    - appliance
+
+# ── Asset management ──────────────────────────────────────────────────────────
+
+glpi:
+  category: itsm-asset
+  description: "GLPI — ITAM, universal coverage, fallback for all types"
+  match_key: hostname
+  match_fallback: serial_number
+  applicable_device_types:
+    - server
+    - workstation
+    - appliance
+  applicable_vms: true
+  fields:
+    glpi_last_seen:     cf_glpi_last_seen
+    glpi_asset_id:      cf_glpi_asset_id
+    glpi_status:        cf_glpi_status
+    glpi_open_tickets:  cf_glpi_open_tickets
+    glpi_last_sync:     cf_glpi_last_sync
