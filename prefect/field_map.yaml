@@ -58,7 +58,7 @@ ad:
     os_name:     cf_ad_os
     status:      cf_ad_enabled
     name:        cf_ad_dns_name
-    ip_address:  cf_ip_address
+    ip_address:  cf_ad_ip_address
   not_applicable:
     - appliance
 
@@ -80,7 +80,7 @@ trellix:
   vm_condition:
     device_role: [server, workstation]   # virtual appliances have no AV agent
   fields:
-    last_pool:  cf_trellix_last_seen
+    last_poll:  cf_trellix_last_seen
     mac_address:  cf_trellix_mac
     os_version:   cf_trellix_os_version
     agent_version:  cf_trellix_agent_ver
@@ -102,7 +102,7 @@ teramind:
     - ip_address
   applicable_device_roles:
     - workstation
-  applicable_vms: true             # no interactive session on VMs
+  applicable_vms: true            
   fields:
     last_seen:   cf_teramind_last_seen
     status:      cf_teramind_status
@@ -234,7 +234,7 @@ nessus:
     - appliance
   applicable_vms: true
   fields:
-    hostname:   cf_nessus_last_seen
+    hostname:   cf_nessus_hostname
     nessus_last_scan:   cf_nessus_last_scan
     ip_address:    cf_nessus_ip
     mac_address:       cf_nessus_mac
@@ -259,7 +259,6 @@ fortigate:
     - appliance
   applicable_vms: true            # FortiGate sees VMs on the network too
   fields:
-    hostname:    cf_fortigate_last_seen
     status:      cf_fortigate_status
     mac_address:    cf_fortigate_mac
     hostname:    cf_fortigate_hostname
@@ -306,7 +305,7 @@ vcenter:
     last_seen:    cf_vcenter_last_seen
     power:        cf_vcenter_power_state
     host:         cf_vcenter_host         # ESXi host IP this VM runs on
-    ip_addrese:        cf_vcenter_ip
+    ip_address:        cf_vcenter_ip
     hostname:        cf_vcenter_hostname
   vm_fields:                      # for VM objects (may differ from host fields)
     last_seen:    cf_vcenter_last_seen
