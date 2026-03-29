@@ -1,0 +1,343 @@
+# =============================================================================
+# field_map.yaml — Tool applicability + Netbox field mapping
+# =============================================================================
+#
+# NETBOX OBJECT MODEL
+# ───────────────────
+# Physical devices  → GET /api/dcim/devices/
+#                     filter: tenant, site, device_role slug
+#
+# Virtual machines  → GET /api/virtualization/virtual-machines/
+#                     filter: tenant, site (via cluster)
+#                     device_role also present on VM objects
+#
+# device_role slugs (shared across devices AND VMs): server | workstation | appliance
+#
+# RUNNER GROUPING
+# ───────────────
+# Group by client (tenant) first, then by site.
+# Many tools have multiple instances per client — one WSUS per site, multiple
+# FortiGates, multiple vCenters, multiple ADs. The playbook maps each instance
+# to its site. The runner merges results at the client level before writing to
+# Netbox, so devices that appear in multiple sites are deduplicated by hostname/IP.
+#
+# MATCH KEY STRATEGY
+# ──────────────────
+# Most tools return hostname AND IP. Use both — try hostname first, fall back
+# to IP. Hostname mismatches are common (domain suffix included, VM display name
+# vs guest OS name). Where noted, a third fallback (MAC, vm_name) is available.
+#
+# applicable_device_roles   → device_role slugs this tool covers (devices + VMs)
+# applicable_vms            → true = also query virtualization/virtual-machines
+# match_keys                → ordered list: first match wins
+# fields                    → script output key : netbox custom field name
+# not_applicable            → device_role slugs permanently excluded (benchmark)
+# =============================================================================
+
+
+# ── Identity & directory ──────────────────────────────────────────────────────
+
+ad:
+  category: identity
+  description: >
+    Active Directory — domain-joined Windows machines.
+    One AD per client (shared across sites via resource_ref).
+    Multiple DCs possible — runner merges results before writing.
+  match_keys:
+    - hostname                    # cn / dNSHostName short name (lowercased)
+    - ip_address                  # dNSHostName resolved, or from script
+  applicable_device_roles:
+    - server
+    - workstation
+  applicable_vms: true
+  vm_condition:
+    device_role: [server, workstation]   # VMs with role appliance are not domain-joined
+    os_family: windows                   # Linux VMs not in AD (unless SSSD)
+  fields:
+    last_logon:  cf_ad_last_seen
+    os_name:     cf_ad_os
+    status:      cf_ad_enabled
+    name:        cf_ad_dns_name
+    ip_address:  cf_ip_address
+  not_applicable:
+    - appliance
+
+
+# ── Endpoint security ─────────────────────────────────────────────────────────
+
+trellix:
+  category: av-edr
+  description: >
+    Trellix — AV/EDR agent on endpoints and servers.
+    Agent installed on OS-bearing devices only.
+  match_keys:
+    - hostname
+    - ip_address
+  applicable_device_roles:
+    - server
+    - workstation
+  applicable_vms: true
+  vm_condition:
+    device_role: [server, workstation]   # virtual appliances have no AV agent
+  fields:
+    last_pool:  cf_trellix_last_seen
+    mac_address:  cf_trellix_mac
+    os_version:   cf_trellix_os_version
+    agent_version:  cf_trellix_agent_ver
+    malware_status: cf_trellix_malware_status
+    ip_address: cf_trellix_ip_address
+    hostname: cf_trellix_hostname
+  not_applicable:
+    - appliance
+
+
+teramind:
+  category: dlp-uam
+  description: >
+    Teramind — user activity monitoring.
+    Benchmark: workstations only. Servers and VMs have no
+    interactive user session — permanently excluded.
+  match_keys:
+    - hostname
+    - ip_address
+  applicable_device_roles:
+    - workstation
+  applicable_vms: true             # no interactive session on VMs
+  fields:
+    last_seen:   cf_teramind_last_seen
+    status:      cf_teramind_status
+    agent_version:   cf_teramind_agent_version
+    mac_address:   cf_teramind_mac
+    OS_version:   cf_teramind_OS
+    FQDN:   cf_teramind_FQDN
+    hostname:   cf_teramind_hostname
+    ip_address:   cf_teramind_ip
+  not_applicable:
+    - server
+    - appliance
+
+
+mdm:
+  category: mdm
+  description: >
+    MDM (Intune/Jamf) — managed laptops enrolled in MDM.
+    Does not cover servers or appliances.
+  match_keys:
+    - hostname
+  applicable_device_roles:
+    - workstation
+  applicable_vms: false
+  fields:
+    last_seen:      cf_mdm_last_seen
+    hostname:     cf_mdm_hostname
+    os_version:     cf_mdm_os
+  not_applicable:
+    - server
+    - appliance
+
+
+# ── Patch management ──────────────────────────────────────────────────────────
+
+wsus:
+  category: patch
+  description: >
+    WSUS — Windows patch management only.
+    Multiple WSUS instances per client: one per site (office = workstations,
+    DC = servers). Each mapped as a separate playbook entry with target_type param.
+    Conditional on OS — skip Linux devices.
+  match_keys:
+    - hostname
+    - ip_address
+  applicable_device_roles:
+    - server
+    - workstation
+  applicable_vms: true
+  vm_condition:
+    device_role: [server, workstation]
+    os_family: windows
+  device_condition:
+    os_family: windows              # skip Linux physical servers/workstations
+  fields:
+    last_reported:  cf_wsus_last_reported
+    last_sync:   cf_wsus_last_sync
+    ip_address:     cf_wsus_ip
+    hostname:   cf_wsus_hostname
+  not_applicable:
+    - appliance
+
+
+# ── SIEM & monitoring ─────────────────────────────────────────────────────────
+
+wazuh:
+  category: hids
+  description: >
+    Wazuh — HIDS agent, cross-platform (Windows + Linux).
+    Agent-based: covers OS-bearing devices only.
+  match_keys:
+    - hostname
+    - ip_address
+  applicable_device_roles:
+    - server
+    - workstation
+  applicable_vms: true
+  vm_condition:
+    device_role: [server, workstation]   # virtual appliances have no agent
+  fields:
+    last_seen:    cf_wazuh_last_seen
+    agent_id:     cf_wazuh_agent_id
+    agent_ver:    cf_wazuh_agent_ver
+    status:       cf_wazuh_status
+    hostname:       cf_wazuh_hostname
+    ip_address:       cf_wazuh_ip
+    os_version:       cf_wazuh_os
+  not_applicable:
+    - appliance
+
+
+elastic:
+  category: siem-log
+  description: >
+    Elastic — log shipper (Beats/agent on endpoints) AND syslog receiver
+    for appliances. All device types send logs — critical for full coverage.
+    Agent-based for servers/workstations/VMs, syslog for appliances.
+  match_keys:
+    - hostname
+    - ip_address
+  applicable_device_roles:
+    - server
+    - workstation
+    - appliance                   # syslog source — FortiGate, switches, etc.
+  applicable_vms: true            # both OS VMs (agent) and virtual appliances (syslog)
+  fields:
+    last_seen:  cf_elastic_last_seen
+    agent_ver:  cf_elastic_agent_ver  # null for syslog-only devices
+    os_version:     cf_elastic_os
+    hostname:     cf_elastic_hostname
+    ip_address:  cf_elastic_ip
+    mac_address:  cf_elastic_mac
+
+# ── Vulnerability management ──────────────────────────────────────────────────
+
+nessus:
+  category: vulnerability
+  description: >
+    Nessus — agentless network scanner. Broadest coverage, no agent required.
+    Currently configured to exclude workstations — adjust scan policy to include.
+    Business rules will handle per-client exclusions; benchmark keeps all types.
+    Multiple Nessus instances possible per client (one per network segment).
+  match_keys:
+    - ip_address                  # primary — Nessus is IP-centric
+    - hostname                    # fallback — if reverse DNS resolves
+    - mac_address                    # fallback — if reverse DNS resolves
+  applicable_device_roles:
+    - server
+    - appliance
+  applicable_vms: true
+  fields:
+    hostname:   cf_nessus_last_seen
+    nessus_last_scan:   cf_nessus_last_scan
+    ip_address:    cf_nessus_ip
+    mac_address:       cf_nessus_mac
+
+
+# ── Network security ──────────────────────────────────────────────────────────
+
+fortigate:
+  category: firewall-utm
+  description: >
+    FortiGate — sees ALL devices it has visibility of (ARP table, DHCP leases,
+    authenticated users, connected endpoints). Covers all device types.
+    Multiple FortiGates per client — one per site or network segment.
+    Hostname not always available — IP is primary match key, MAC as fallback.
+  match_keys:
+    - ip_address                  # primary — FortiGate is always IP-aware
+    - mac_address                 # fallback — reliable when IP unavailable
+    - hostname                    # not always populated
+  applicable_device_roles:
+    - server
+    - workstation
+    - appliance
+  applicable_vms: true            # FortiGate sees VMs on the network too
+  fields:
+    hostname:    cf_fortigate_last_seen
+    status:      cf_fortigate_status
+    mac_address:    cf_fortigate_mac
+    hostname:    cf_fortigate_hostname
+  # no not_applicable — FortiGate sees everything on the network
+
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+
+vcenter:
+  category: virtualization
+  description: >
+    vCenter — manages ESXi hosts and all guest VMs including virtual appliances.
+
+    PHYSICAL HOSTS (ESXi):
+      Registered in Netbox as devices with device_role=server.
+      Script currently collects VMs only — extend to collect hosts too.
+      host field in script = ESXi host IP address (not hostname, not cluster).
+
+    VIRTUAL MACHINES:
+      Registered in Netbox as VM objects.
+      device_role can be server, workstation, OR appliance (e.g. pfsense,
+      fortimail running as VMs — they are appliances, not servers).
+
+    MATCH STRATEGY FOR VMs:
+      vCenter returns the VM display name (not always the guest OS hostname).
+      Netbox has two fields:
+        name    = VM display name in vCenter  ← match this first
+        vm_name = guest OS hostname           ← custom field, fallback
+      Script may return multiple IPs per VM — validate all against Netbox
+      primary_ip and all interface IPs before giving up.
+
+    match_keys apply per object type — see vm_match_keys below.
+  match_keys:                     # for ESXi physical hosts
+    - ip_address                  # host field from script = ESXi host IP
+    - hostname
+  vm_match_keys:                  # for VM objects — different strategy
+    - vm_name                     # Netbox custom field: guest OS hostname
+    - name                        # Netbox native field: vCenter display name
+    - ip_address                  # validate all IPs returned by script
+  applicable_device_roles:
+    - server                      # ESXi physical hosts
+  applicable_vms: true            # all VM device_roles: server, workstation, appliance
+  fields:                         # for ESXi hosts (devices)
+    last_seen:    cf_vcenter_last_seen
+    power:        cf_vcenter_power_state
+    host:         cf_vcenter_host         # ESXi host IP this VM runs on
+    ip_addrese:        cf_vcenter_ip
+    hostname:        cf_vcenter_hostname
+  vm_fields:                      # for VM objects (may differ from host fields)
+    last_seen:    cf_vcenter_last_seen
+    power:        cf_vcenter_power_state
+    host:         cf_vcenter_host         # ESXi host IP
+    ip_address:        cf_vcenter_ip
+    name:        cf_vcenter_name
+    hostname:        cf_vcenter_hostname
+  # no not_applicable — vCenter manages all VM types
+
+
+# ── Asset management ──────────────────────────────────────────────────────────
+
+glpi:
+  category: itsm-asset
+  description: >
+    GLPI — ITAM, inventory synced from AD.
+    Coverage limited to AD-joined devices: servers and workstations only.
+    Appliances and VMs not in GLPI unless manually added.
+  match_keys:
+    - hostname
+    - ip_address
+  applicable_device_roles:
+    - server
+    - workstation
+  applicable_vms: false           # VMs not in GLPI (AD-sync based)
+  fields:
+    last_seen:     cf_glpi_last_seen
+    status:        cf_glpi_status
+    hostname:     cf_glpi_hostname
+    ip_address:     cf_glpi_ip
+    device_id:     cf_glpi_id
+  not_applicable:
+    - appliance

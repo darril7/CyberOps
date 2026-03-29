@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC Inventory Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:        #0a0e14;
+    --panel:     #0f1520;
+    --border:    #1e2d42;
+    --accent:    #00d4ff;
+    --accent2:   #ff6b35;
+    --accent3:   #39ff14;
+    --muted:     #3a5068;
+    --text:      #c8d8e8;
+    --textdim:   #5a7a94;
+    --netbox:    #7c3aed;
+    --netbox-l:  #a855f7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    padding: 32px 24px 48px;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,212,255,0.05) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,45,66,0.3) 39px, rgba(30,45,66,0.3) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,45,66,0.2) 39px, rgba(30,45,66,0.2) 40px);
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--textdim);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    margin-bottom: 36px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* ── DIAGRAM GRID ── */
+  .diagram {
+    display: grid;
+    grid-template-columns: 220px 1fr 220px;
+    grid-template-rows: auto auto auto;
+    gap: 0;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ── PANEL BASE ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    position: relative;
+  }
+  .panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  /* ── LEFT COLUMN: PLAYBOOK ── */
+  .col-playbook {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 20px;
+  }
+
+  .box-playbook {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.04);
+  }
+  .box-playbook .panel-title { color: var(--accent); }
+  .box-playbook .panel-title::before { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+  .tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 3px;
+    display: inline-block;
+    margin: 2px 3px 2px 0;
+  }
+  .tag-customer { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .tag-site     { background: rgba(255,107,53,0.1); color: var(--accent2); border: 1px solid rgba(255,107,53,0.3); }
+  .tag-tool     { background: rgba(57,255,20,0.08); color: var(--accent3); border: 1px solid rgba(57,255,20,0.25); }
+  .tag-block    { background: rgba(124,58,237,0.1); color: var(--netbox-l); border: 1px solid rgba(124,58,237,0.3); }
+
+  .indent { padding-left: 12px; border-left: 2px solid var(--border); margin: 4px 0 4px 6px; }
+  .row-label {
+    font-size: 11px;
+    color: var(--textdim);
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* ── MIDDLE COLUMN: SCRIPTS / NETBOX ── */
+  .col-center {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 20px;
+  }
+
+  /* Script row */
+  .scripts-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .box-script {
+    border-color: var(--accent3);
+    background: rgba(57,255,20,0.03);
+    text-align: center;
+    padding: 12px 8px;
+  }
+  .box-script .panel-title { color: var(--accent3); justify-content: center; font-size: 12px; }
+  .box-script .panel-title::before { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+  .script-detail { font-size: 11px; color: var(--textdim); font-family: 'Share Tech Mono', monospace; margin-top: 6px; }
+
+  /* Prefect runner */
+  .box-runner {
+    border-color: var(--accent2);
+    background: rgba(255,107,53,0.04);
+    text-align: center;
+  }
+  .box-runner .panel-title { color: var(--accent2); justify-content: center; }
+  .box-runner .panel-title::before { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+
+  /* Netbox central */
+  .box-netbox {
+    border-color: var(--netbox-l);
+    background: rgba(124,58,237,0.06);
+    border-width: 2px;
+    box-shadow: 0 0 24px rgba(124,58,237,0.15), inset 0 0 30px rgba(124,58,237,0.03);
+  }
+  .box-netbox .panel-title { color: var(--netbox-l); font-size: 13px; }
+  .box-netbox .panel-title::before { background: var(--netbox-l); box-shadow: 0 0 8px var(--netbox-l); width: 8px; height: 8px; }
+
+  .netbox-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .nb-entity {
+    background: rgba(124,58,237,0.08);
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 5px;
+    padding: 10px 12px;
+  }
+  .nb-entity-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--netbox-l);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .nb-item {
+    font-size: 11px;
+    color: var(--textdim);
+    font-family: 'Share Tech Mono', monospace;
+    padding: 2px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .nb-item::before { content: '›'; color: var(--netbox-l); opacity: 0.6; }
+
+  /* Custom fields panel */
+  .box-cf {
+    border-color: rgba(124,58,237,0.4);
+    background: rgba(124,58,237,0.04);
+  }
+  .cf-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .cf-item {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+  }
+  .cf-item .cf-source {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .cf-item .cf-field { color: var(--text); }
+  .source-ad     { color: var(--accent); }
+  .source-wsus   { color: #fbbf24; }
+  .source-trellix{ color: var(--accent2); }
+  .source-glpi   { color: var(--accent3); }
+
+  /* ── RIGHT COLUMN: EXAMPLE DEVICE ── */
+  .col-right {
+    grid-column: 3;
+    grid-row: 1 / 4;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .box-device {
+    border-color: var(--muted);
+    flex: 1;
+  }
+  .box-device .panel-title { color: var(--textdim); }
+  .box-device .panel-title::before { background: var(--textdim); }
+
+  .device-field {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(30,45,66,0.6);
+  }
+  .device-field:last-child { border-bottom: none; }
+  .device-field .key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--textdim);
+    letter-spacing: 0.05em;
+  }
+  .device-field .val {
+    font-size: 12px;
+    color: var(--text);
+    margin-top: 1px;
+  }
+  .val-filled  { color: var(--accent3) !important; }
+  .val-warn    { color: var(--accent2) !important; }
+  .val-unknown { color: var(--muted) !important; font-style: italic; }
+
+  /* ── ARROWS / CONNECTORS ── */
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    position: relative;
+  }
+  .arrow-line {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--muted), transparent);
+    position: relative;
+  }
+  .arrow-label {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg);
+    padding: 2px 10px;
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--textdim);
+    white-space: nowrap;
+    letter-spacing: 0.1em;
+  }
+
+  /* vertical arrow between sections */
+  .v-arrow {
+    text-align: center;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    padding: 2px 0;
+    position: relative;
+  }
+  .v-arrow span {
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--textdim);
+    display: block;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── FLOW INDICATORS ── */
+  .flow-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 12px;
+    color: var(--textdim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .flow-line .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .flow-line .arrow-sym { color: var(--border); font-size: 14px; }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--textdim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── NAMING BRIDGE ── */
+  .bridge-box {
+    border: 1px dashed rgba(0,212,255,0.25);
+    border-radius: 6px;
+    padding: 10px 14px;
+    background: rgba(0,212,255,0.02);
+    margin-top: 4px;
+  }
+  .bridge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 12px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .bridge-row .eq { color: var(--muted); font-size: 14px; }
+  .bridge-row .left { color: var(--accent); min-width: 90px; }
+  .bridge-row .right { color: var(--netbox-l); }
+
+  /* pulse animation on Netbox */
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 24px rgba(124,58,237,0.15), inset 0 0 30px rgba(124,58,237,0.03); }
+    50%       { box-shadow: 0 0 36px rgba(124,58,237,0.30), inset 0 0 30px rgba(124,58,237,0.06); }
+  }
+  .box-netbox { animation: pulse-border 3s ease-in-out infinite; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+  .blink { animation: blink 2s ease-in-out infinite; }
+
+  .section-divider {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    text-align: center;
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<h1>SOC Inventory Architecture</h1>
+<p class="subtitle">playbook → prefect → scripts → netbox (single source of truth)</p>
+
+<div class="diagram">
+
+  <!-- ═══════════════════════════════════════════════════════
+       LEFT: PLAYBOOK
+  ═══════════════════════════════════════════════════════ -->
+  <div class="col-playbook">
+
+    <div class="panel box-playbook">
+      <div class="panel-title">playbook.yaml</div>
+      <div class="row-label">customers:</div>
+      <div class="indent">
+        <span class="tag tag-customer">customer_a</span>
+        <div class="indent" style="margin-top:4px">
+          <div class="row-label">sites:</div>
+          <div class="indent">
+            <span class="tag tag-site">office</span><br>
+            <span class="tag tag-site">dc</span>
+          </div>
+          <div class="row-label" style="margin-top:6px">tools:</div>
+          <div class="indent">
+            <span class="tag tag-tool">ad</span>
+            <span class="tag tag-tool">wsus</span>
+            <span class="tag tag-tool">glpi</span>
+          </div>
+        </div>
+        <span class="tag tag-customer" style="margin-top:8px; display:inline-block">customer_b</span>
+        <div class="indent" style="margin-top:4px">
+          <div class="row-label">sites:</div>
+          <div class="indent"><span class="tag tag-site">main</span></div>
+          <div class="row-label" style="margin-top:6px">tools:</div>
+          <div class="indent">
+            <span class="tag tag-tool">ad</span>
+            <span class="tag tag-tool">trellix</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel box-playbook" style="border-color: var(--netbox-l); background: rgba(124,58,237,0.04);">
+      <div class="panel-title" style="color: var(--netbox-l);">name convention</div>
+      <div style="font-size: 11px; color: var(--textdim); margin-bottom: 8px; font-family: 'Share Tech Mono', monospace;">Same names in Netbox:</div>
+      <div class="bridge-box">
+        <div class="bridge-row">
+          <span class="left">customer_a</span>
+          <span class="eq">→</span>
+          <span class="right">tenant: customer_a</span>
+        </div>
+        <div class="bridge-row">
+          <span class="left">office</span>
+          <span class="eq">→</span>
+          <span class="right">site: office</span>
+        </div>
+        <div class="bridge-row">
+          <span class="left">dc</span>
+          <span class="eq">→</span>
+          <span class="right">site: dc</span>
+        </div>
+      </div>
+      <div style="font-size: 10px; color: var(--muted); margin-top: 8px; font-family: 'Share Tech Mono', monospace; line-height: 1.5;">
+        scripts resolve devices by<br>tenant + site → update in place
+      </div>
+    </div>
+
+    <div class="panel" style="border-color: var(--muted); background: rgba(0,0,0,0.2);">
+      <div class="panel-title" style="color: var(--textdim);">prefect blocks</div>
+      <div class="flow-line">
+        <span class="dot" style="background: var(--netbox-l);"></span>
+        <span>customer-a/ad-main</span>
+      </div>
+      <div class="flow-line">
+        <span class="dot" style="background: var(--netbox-l);"></span>
+        <span>customer-a/wsus-office</span>
+      </div>
+      <div class="flow-line">
+        <span class="dot" style="background: var(--netbox-l);"></span>
+        <span>customer-a/wsus-dc</span>
+      </div>
+      <div class="flow-line">
+        <span class="dot" style="background: var(--netbox-l);"></span>
+        <span>customer-a/glpi-main</span>
+      </div>
+      <div class="flow-line">
+        <span class="dot" style="background: var(--netbox-l);"></span>
+        <span>customer-b/ad-main</span>
+      </div>
+      <div class="flow-line">
+        <span class="dot" style="background: var(--netbox-l);"></span>
+        <span>customer-b/trellix-main</span>
+      </div>
+      <div style="font-size: 10px; color: var(--muted); margin-top: 8px; font-family: 'Share Tech Mono', monospace;">one block per source per customer</div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CENTER: RUNNER + SCRIPTS + NETBOX
+  ═══════════════════════════════════════════════════════ -->
+  <div class="col-center">
+
+    <!-- Runner -->
+    <div class="panel box-runner">
+      <div class="panel-title">prefect: playbook_runner</div>
+      <div style="font-size: 12px; color: var(--textdim); font-family: 'Share Tech Mono', monospace; text-align:center;">
+        loads playbook → resolves tasks → injects credentials → dispatches flows
+      </div>
+      <div style="display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap;">
+        <span class="tag tag-tool">--customer customer_a</span>
+        <span class="tag tag-tool">--site dc</span>
+        <span class="tag tag-tool">--tool wsus</span>
+        <span class="tag tag-tool">--dry-run</span>
+      </div>
+    </div>
+
+    <!-- Arrow down -->
+    <div style="text-align:center; color: var(--muted); font-size: 18px; line-height:1;">↓ <span style="font-size:10px; font-family:'Share Tech Mono',monospace; color: var(--textdim); display:block; margin-top:2px;">dispatches per-task flows</span></div>
+
+    <!-- Scripts -->
+    <div class="scripts-row">
+      <div class="panel box-script">
+        <div class="panel-title">AD</div>
+        <div class="script-detail">ad_inventory.py</div>
+        <div class="script-detail" style="margin-top:4px; color: var(--accent); opacity: 0.7;">ldap3</div>
+        <div class="script-detail">hostname / OS / OU / last seen</div>
+      </div>
+      <div class="panel box-script">
+        <div class="panel-title">WSUS</div>
+        <div class="script-detail">wsus_inventory.py</div>
+        <div class="script-detail" style="margin-top:4px; color: #fbbf24; opacity: 0.7;">win32com / API</div>
+        <div class="script-detail">patch status / missing KBs</div>
+      </div>
+      <div class="panel box-script">
+        <div class="panel-title">TRELLIX</div>
+        <div class="script-detail">trellix_inventory.py</div>
+        <div class="script-detail" style="margin-top:4px; color: var(--accent2); opacity: 0.7;">REST API</div>
+        <div class="script-detail">agent ver / DAT / status</div>
+      </div>
+      <div class="panel box-script">
+        <div class="panel-title">GLPI</div>
+        <div class="script-detail">glpi_sync.py</div>
+        <div class="script-detail" style="margin-top:4px; color: var(--accent3); opacity: 0.7;">REST API</div>
+        <div class="script-detail">asset ref / open tickets</div>
+      </div>
+    </div>
+
+    <!-- Arrow down -->
+    <div style="text-align:center; color: var(--muted); font-size: 18px; line-height:1;">↓ <span style="font-size:10px; font-family:'Share Tech Mono',monospace; color: var(--textdim); display:block; margin-top:2px;">each script resolves device by tenant+site → updates custom fields</span></div>
+
+    <!-- Netbox central -->
+    <div class="panel box-netbox">
+      <div class="panel-title">NETBOX — single source of truth</div>
+
+      <div class="netbox-grid">
+        <div class="nb-entity">
+          <div class="nb-entity-title">tenants</div>
+          <div class="nb-item">customer_a</div>
+          <div class="nb-item">customer_b</div>
+          <div class="nb-item">customer_c</div>
+        </div>
+        <div class="nb-entity">
+          <div class="nb-entity-title">sites</div>
+          <div class="nb-item">office (→ A)</div>
+          <div class="nb-item">dc (→ A)</div>
+          <div class="nb-item">main (→ B)</div>
+        </div>
+        <div class="nb-entity">
+          <div class="nb-entity-title">devices</div>
+          <div class="nb-item">workstations</div>
+          <div class="nb-item">servers</div>
+          <div class="nb-item">network gear</div>
+        </div>
+      </div>
+
+      <!-- divider -->
+      <div class="section-divider" style="margin: 12px 0 8px;">custom fields updated by scripts</div>
+
+      <div class="cf-grid">
+        <div class="cf-item">
+          <div class="cf-source source-ad">AD</div>
+          <div class="cf-field">cf_ad_ou</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-ad">AD</div>
+          <div class="cf-field">cf_ad_last_seen</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-ad">AD</div>
+          <div class="cf-field">cf_ad_os</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-ad">AD</div>
+          <div class="cf-field">cf_ad_enabled</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-wsus">WSUS</div>
+          <div class="cf-field">cf_wsus_status</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-wsus">WSUS</div>
+          <div class="cf-field">cf_wsus_missing_kb</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-wsus">WSUS</div>
+          <div class="cf-field">cf_wsus_last_scan</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-wsus">WSUS</div>
+          <div class="cf-field">cf_wsus_type</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-trellix">TRELLIX</div>
+          <div class="cf-field">cf_av_agent_ver</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-trellix">TRELLIX</div>
+          <div class="cf-field">cf_av_dat_date</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-trellix">TRELLIX</div>
+          <div class="cf-field">cf_av_status</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-trellix">TRELLIX</div>
+          <div class="cf-field">cf_av_last_check</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-glpi">GLPI</div>
+          <div class="cf-field">cf_glpi_asset_id</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-glpi">GLPI</div>
+          <div class="cf-field">cf_glpi_open_tickets</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-glpi">GLPI</div>
+          <div class="cf-field">cf_glpi_last_sync</div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-source source-glpi">GLPI</div>
+          <div class="cf-field">cf_glpi_status</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       RIGHT: EXAMPLE DEVICE VIEW
+  ═══════════════════════════════════════════════════════ -->
+  <div class="col-right">
+
+    <div class="panel" style="border-color: var(--netbox-l); background: rgba(124,58,237,0.05);">
+      <div class="panel-title" style="color: var(--netbox-l);">example: device view</div>
+      <div style="font-size: 10px; font-family: 'Share Tech Mono', monospace; color: var(--muted); margin-bottom: 8px;">
+        netbox / dcim / devices / PC-OFFICE-042
+      </div>
+
+      <div class="device-field">
+        <span class="key">tenant</span>
+        <span class="val" style="color: var(--accent);">customer_a</span>
+      </div>
+      <div class="device-field">
+        <span class="key">site</span>
+        <span class="val" style="color: var(--accent2);">office</span>
+      </div>
+      <div class="device-field">
+        <span class="key">name</span>
+        <span class="val">PC-OFFICE-042</span>
+      </div>
+
+      <div class="section-divider" style="margin: 8px 0; font-size: 9px;">AD fields</div>
+      <div class="device-field">
+        <span class="key">cf_ad_ou</span>
+        <span class="val val-filled">OU=Office,DC=corp,...</span>
+      </div>
+      <div class="device-field">
+        <span class="key">cf_ad_os</span>
+        <span class="val val-filled">Windows 11 Pro 23H2</span>
+      </div>
+      <div class="device-field">
+        <span class="key">cf_ad_last_seen</span>
+        <span class="val val-filled">2026-03-22</span>
+      </div>
+
+      <div class="section-divider" style="margin: 8px 0; font-size: 9px;">WSUS fields</div>
+      <div class="device-field">
+        <span class="key">cf_wsus_status</span>
+        <span class="val val-warn">3 updates pending</span>
+      </div>
+      <div class="device-field">
+        <span class="key">cf_wsus_type</span>
+        <span class="val val-filled">workstation</span>
+      </div>
+      <div class="device-field">
+        <span class="key">cf_wsus_last_scan</span>
+        <span class="val val-filled">2026-03-23</span>
+      </div>
+
+      <div class="section-divider" style="margin: 8px 0; font-size: 9px;">TRELLIX fields</div>
+      <div class="device-field">
+        <span class="key">cf_av_status</span>
+        <span class="val val-filled">managed</span>
+      </div>
+      <div class="device-field">
+        <span class="key">cf_av_dat_date</span>
+        <span class="val val-warn">2026-03-20 ⚠</span>
+      </div>
+
+      <div class="section-divider" style="margin: 8px 0; font-size: 9px;">GLPI fields</div>
+      <div class="device-field">
+        <span class="key">cf_glpi_asset_id</span>
+        <span class="val val-unknown">— not synced —</span>
+      </div>
+      <div class="device-field">
+        <span class="key">cf_glpi_open_tickets</span>
+        <span class="val val-unknown">— not synced —</span>
+      </div>
+    </div>
+
+    <div class="panel" style="border-color: var(--border);">
+      <div class="panel-title" style="color: var(--textdim);">script lookup logic</div>
+      <div class="flow-line" style="font-size: 11px; line-height: 1.6;">
+        <span class="dot" style="background: var(--accent);"></span>
+        <span>1. load playbook task<br>&nbsp;&nbsp;&nbsp;&nbsp;(customer+site+tool)</span>
+      </div>
+      <div class="flow-line" style="font-size: 11px; line-height: 1.6;">
+        <span class="dot" style="background: var(--accent2);"></span>
+        <span>2. query source system<br>&nbsp;&nbsp;&nbsp;&nbsp;(AD / WSUS / etc)</span>
+      </div>
+      <div class="flow-line" style="font-size: 11px; line-height: 1.6;">
+        <span class="dot" style="background: var(--netbox-l);"></span>
+        <span>3. get device list from<br>&nbsp;&nbsp;&nbsp;&nbsp;netbox by tenant+site</span>
+      </div>
+      <div class="flow-line" style="font-size: 11px; line-height: 1.6;">
+        <span class="dot" style="background: var(--accent3); animation: blink 1.5s infinite;"></span>
+        <span>4. match by hostname →<br>&nbsp;&nbsp;&nbsp;&nbsp;PATCH custom fields</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>AD</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span>WSUS</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent2)"></span>Trellix</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent3)"></span>GLPI</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--netbox-l)"></span>Netbox (CMDB)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--muted)"></span>Prefect Block (vault)</div>
+</div>
+
+</body>
+</html>
