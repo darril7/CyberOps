@@ -1,0 +1,36 @@
+# SOC Inventory Project
+# =====================
+#
+# soc_inventory/
+# ├── config/
+# │   ├── playbook.yaml          ← customers · sites · tool blocks
+# │   └── field_map.yaml         ← tool applicability · match keys · cf fields
+# │
+# ├── runner/
+# │   ├── __init__.py
+# │   ├── netbox_client.py       ← query + match + patch Netbox
+# │   ├── field_map_loader.py    ← load field_map, applicability checks
+# │   └── run_task.py            ← one Prefect task = one tool × site × customer
+# │
+# ├── flows/
+# │   ├── __init__.py
+# │   └── soc_inventory_flow.py  ← master Prefect flow
+# │
+# ├── scripts/
+# │   ├── __init__.py
+# │   ├── ad_inventory.py        ← fetch() → dict[hostname, data]
+# │   ├── trellix_inventory.py
+# │   ├── wsus_inventory.py
+# │   ├── wazuh_inventory.py
+# │   ├── elastic_inventory.py
+# │   ├── nessus_inventory.py
+# │   ├── fortigate_inventory.py
+# │   ├── vcenter_inventory.py
+# │   ├── glpi_inventory.py
+# │   ├── teramind_inventory.py
+# │   └── mdm_inventory.py
+# │
+# ├── playbook_loader.py         ← loads + resolves playbook.yaml
+# ├── prefect.yaml               ← deployment config
+# ├── requirements.txt
+# └── SETUP.sh                   ← step-by-step Prefect setup guide

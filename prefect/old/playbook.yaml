@@ -1,0 +1,437 @@
+# =============================================================================
+# SOC Inventory Playbook
+# =============================================================================
+# Naming convention:
+#   customer_id  → matches Netbox tenant slug  : client1, client2, client3 ...
+#   site_id      → matches Netbox site slug    : c1-office1, c1-dc1, c1-dc2 ...
+#
+# Block naming pattern: {client-slug}/{tool}-{scope}
+#   scope = "main" when shared across all sites for that client
+#   scope = site slug when the instance is specific to one site
+#
+# Examples:
+#   client1/ad-main          ← AD shared across all client1 sites
+#   client1/wsus-c1-office1  ← WSUS only for client1 office1 (workstations)
+#   client1/wsus-c1-dc1      ← WSUS only for client1 dc1 (servers)
+#   client1/trellix-main     ← Trellix shared (one ePO, group_filter scopes it)
+# =============================================================================
+
+customers:
+
+  # ---------------------------------------------------------------------------
+  # CLIENT1 — one office + one DC
+  # AD shared across both sites (same domain, different OUs)
+  # WSUS split: workstations at office, servers at DC
+  # Trellix shared ePO, scoped by group_filter per site
+  # GLPI shared instance (AD-synced)
+  # ---------------------------------------------------------------------------
+  client1:
+    enabled: true
+    display_name: "Client 1"
+
+    resources:
+      ad_main:
+        tool: ad
+        block: "client1-ad-main"
+        params:
+          domain: "corp.client1.local"
+          search_base: "DC=corp,DC=client1,DC=local"
+          ldap_port: 636
+          use_ssl: true
+
+      glpi_main:
+        tool: glpi
+        block: "client1-glpi-main"
+        params:
+          base_url: "http://glpi.client1.local"
+          verify_ssl: false
+
+      trellix_main:
+        tool: trellix
+        block: "client1-trellix-main"
+        params:
+          api_base: "https://epo.client1.local/epo/api"
+          api_version: "v2"
+          verify_ssl: false
+
+    sites:
+
+      c1-office1:
+        enabled: true
+        display_name: "Client 1 — Office 1"
+        inventory_sources:
+
+          ad:
+            resource_ref: ad_main
+            params:
+              ou_filter: "OU=Office1,OU=Workstations,DC=corp,DC=client1,DC=local"
+
+          wsus:
+            tool: wsus
+            block: "client1-wsus-c1-office1"
+            params:
+              server_url: "http://wsus-office1.client1.local:8530"
+              target_type: workstation
+
+          trellix:
+            resource_ref: trellix_main
+            params:
+              group_filter: "Client1/Office1"
+
+          glpi:
+            resource_ref: glpi_main
+
+          wazuh:
+            tool: wazuh
+            block: "client1-wazuh-main"
+            params:
+              host: "wazuh.client1.local"
+              port: 55000
+              verify_ssl: false
+
+          elastic:
+            tool: elastic
+            block: "client1-elastic-main"
+            params:
+              host: "elastic.client1.local"
+              port: 9200
+              verify_ssl: false
+
+          nessus:
+            tool: nessus
+            block: "client1-nessus-main"
+            params:
+              host: "nessus.client1.local"
+              port: 8834
+              scan_filter: "Office1"
+              verify_ssl: false
+
+          fortigate:
+            tool: fortigate
+            block: "client1-fortigate-c1-office1"
+            params:
+              host: "fw-office1.client1.local"
+              verify_ssl: false
+
+          teramind:
+            tool: teramind
+            block: "client1-teramind-main"
+            params:
+              api_base: "https://teramind.client1.local/api"
+
+      c1-dc1:
+        enabled: true
+        display_name: "Client 1 — DC 1"
+        inventory_sources:
+
+          ad:
+            resource_ref: ad_main
+            params:
+              ou_filter: "OU=DC1,OU=Servers,DC=corp,DC=client1,DC=local"
+
+          wsus:
+            tool: wsus
+            block: "client1-wsus-c1-dc1"
+            params:
+              server_url: "http://wsus-dc1.client1.local:8530"
+              target_type: server
+
+          trellix:
+            resource_ref: trellix_main
+            params:
+              group_filter: "Client1/DC1"
+
+          glpi:
+            resource_ref: glpi_main
+
+          wazuh:
+            tool: wazuh
+            block: "client1-wazuh-main"      # same Wazuh, different devices
+            params:
+              host: "wazuh.client1.local"
+              port: 55000
+              verify_ssl: false
+
+          elastic:
+            tool: elastic
+            block: "client1-elastic-main"
+            params:
+              host: "elastic.client1.local"
+              port: 9200
+              verify_ssl: false
+
+          nessus:
+            tool: nessus
+            block: "client1-nessus-main"
+            params:
+              host: "nessus.client1.local"
+              port: 8834
+              scan_filter: "DC1"
+              verify_ssl: false
+
+          vcenter:
+            tool: vcenter
+            block: "client1-vcenter-c1-dc1"
+            params:
+              host: "vcenter-dc1.client1.local"
+              verify_ssl: false
+
+          fortigate:
+            tool: fortigate
+            block: "client1-fortigate-c1-dc1"
+            params:
+              host: "fw-dc1.client1.local"
+              verify_ssl: false
+
+  # ---------------------------------------------------------------------------
+  # CLIENT2 — single site (office only, no DC)
+  # Simpler stack: AD + Trellix + GLPI + FortiGate, no WSUS, no vCenter
+  # ---------------------------------------------------------------------------
+  client2:
+    enabled: true
+    display_name: "Client 2"
+
+    resources:
+      ad_main:
+        tool: ad
+        block: "client2-ad-main"
+        params:
+          domain: "corp.client2.local"
+          search_base: "DC=corp,DC=client2,DC=local"
+          ldap_port: 636
+          use_ssl: true
+
+      glpi_main:
+        tool: glpi
+        block: "client2-glpi-main"
+        params:
+          base_url: "http://glpi.client2.local"
+          verify_ssl: false
+
+    sites:
+
+      c2-office1:
+        enabled: true
+        display_name: "Client 2 — Office 1"
+        inventory_sources:
+
+          ad:
+            resource_ref: ad_main
+
+          trellix:
+            tool: trellix
+            block: "client2-trellix-main"
+            params:
+              api_base: "https://epo.client2.local/epo/api"
+              api_version: "v2"
+              group_filter: "Client2/Office1"
+              verify_ssl: false
+
+          glpi:
+            resource_ref: glpi_main
+
+          fortigate:
+            tool: fortigate
+            block: "client2-fortigate-c2-office1"
+            params:
+              host: "fw-office1.client2.local"
+              verify_ssl: false
+
+          nessus:
+            tool: nessus
+            block: "client2-nessus-main"
+            params:
+              host: "nessus.client2.local"
+              port: 8834
+              verify_ssl: false
+
+  # ---------------------------------------------------------------------------
+  # CLIENT3 — one office + two DCs
+  # Has MDM for managed laptops, separate vCenter per DC
+  # ---------------------------------------------------------------------------
+  client3:
+    enabled: true
+    display_name: "Client 3"
+
+    resources:
+      ad_main:
+        tool: ad
+        block: "client3-ad-main"
+        params:
+          domain: "corp.client3.local"
+          search_base: "DC=corp,DC=client3,DC=local"
+          ldap_port: 636
+          use_ssl: true
+
+      glpi_main:
+        tool: glpi
+        block: "client3-glpi-main"
+        params:
+          base_url: "http://glpi.client3.local"
+          verify_ssl: false
+
+      trellix_main:
+        tool: trellix
+        block: "client3-trellix-main"
+        params:
+          api_base: "https://epo.client3.local/epo/api"
+          api_version: "v2"
+          verify_ssl: false
+
+    sites:
+
+      c3-office1:
+        enabled: true
+        display_name: "Client 3 — Office 1"
+        inventory_sources:
+
+          ad:
+            resource_ref: ad_main
+            params:
+              ou_filter: "OU=Office1,OU=Workstations,DC=corp,DC=client3,DC=local"
+
+          wsus:
+            tool: wsus
+            block: "client3-wsus-c3-office1"
+            params:
+              server_url: "http://wsus-office1.client3.local:8530"
+              target_type: workstation
+
+          trellix:
+            resource_ref: trellix_main
+            params:
+              group_filter: "Client3/Office1"
+
+          glpi:
+            resource_ref: glpi_main
+
+          mdm:
+            tool: mdm
+            block: "client3-mdm-main"
+            params:
+              provider: "intune"
+              tenant_id: "..."
+
+          fortigate:
+            tool: fortigate
+            block: "client3-fortigate-c3-office1"
+            params:
+              host: "fw-office1.client3.local"
+              verify_ssl: false
+
+          teramind:
+            tool: teramind
+            block: "client3-teramind-main"
+            params:
+              api_base: "https://teramind.client3.local/api"
+
+      c3-dc1:
+        enabled: true
+        display_name: "Client 3 — DC 1"
+        inventory_sources:
+
+          ad:
+            resource_ref: ad_main
+            params:
+              ou_filter: "OU=DC1,OU=Servers,DC=corp,DC=client3,DC=local"
+
+          wsus:
+            tool: wsus
+            block: "client3-wsus-c3-dc1"
+            params:
+              server_url: "http://wsus-dc1.client3.local:8530"
+              target_type: server
+
+          trellix:
+            resource_ref: trellix_main
+            params:
+              group_filter: "Client3/DC1"
+
+          glpi:
+            resource_ref: glpi_main
+
+          vcenter:
+            tool: vcenter
+            block: "client3-vcenter-c3-dc1"
+            params:
+              host: "vcenter-dc1.client3.local"
+              verify_ssl: false
+
+          fortigate:
+            tool: fortigate
+            block: "client3-fortigate-c3-dc1"
+            params:
+              host: "fw-dc1.client3.local"
+              verify_ssl: false
+
+          nessus:
+            tool: nessus
+            block: "client3-nessus-c3-dc1"
+            params:
+              host: "nessus-dc1.client3.local"
+              port: 8834
+              verify_ssl: false
+
+      c3-dc2:
+        enabled: true
+        display_name: "Client 3 — DC 2"
+        inventory_sources:
+
+          ad:
+            resource_ref: ad_main
+            params:
+              ou_filter: "OU=DC2,OU=Servers,DC=corp,DC=client3,DC=local"
+
+          wsus:
+            tool: wsus
+            block: "client3-wsus-c3-dc2"
+            params:
+              server_url: "http://wsus-dc2.client3.local:8530"
+              target_type: server
+
+          trellix:
+            resource_ref: trellix_main
+            params:
+              group_filter: "Client3/DC2"
+
+          vcenter:
+            tool: vcenter
+            block: "client3-vcenter-c3-dc2"    # separate vCenter per DC
+            params:
+              host: "vcenter-dc2.client3.local"
+              verify_ssl: false
+
+          fortigate:
+            tool: fortigate
+            block: "client3-fortigate-c3-dc2"
+            params:
+              host: "fw-dc2.client3.local"
+              verify_ssl: false
+
+          nessus:
+            tool: nessus
+            block: "client3-nessus-c3-dc2"
+            params:
+              host: "nessus-dc2.client3.local"
+              port: 8834
+              verify_ssl: false
+
+  # ---------------------------------------------------------------------------
+  # CLIENT4 — template for new onboarding
+  # Copy this block, set enabled: true, fill in real values
+  # ---------------------------------------------------------------------------
+  client4:
+    enabled: false
+    display_name: "Client 4 (onboarding)"
+    resources: {}
+    sites:
+      c4-office1:
+        enabled: false
+        display_name: "Client 4 — Office 1"
+        inventory_sources:
+          ad:
+            tool: ad
+            block: "client4-ad-main"
+            params:
+              domain: "corp.client4.local"
+              search_base: "DC=corp,DC=client4,DC=local"

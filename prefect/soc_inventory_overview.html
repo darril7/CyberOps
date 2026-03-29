@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC Inventory Automation — Technical Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0d1117;
+    --surface:    #161b22;
+    --surface2:   #1c2333;
+    --border:     #30363d;
+    --border2:    #21262d;
+    --text:       #e6edf3;
+    --muted:      #8b949e;
+    --faint:      #484f58;
+    --accent:     #2f81f7;
+    --accent-dim: #1f4b8a;
+    --green:      #3fb950;
+    --green-dim:  #1a4429;
+    --purple:     #a371f7;
+    --purple-dim: #3d2168;
+    --amber:      #e3b341;
+    --amber-dim:  #5a3e1b;
+    --coral:      #f78166;
+    --coral-dim:  #5a1e1e;
+    --teal:       #39c5cf;
+    --teal-dim:   #0e3a3e;
+
+    --f-body: 'DM Sans', system-ui, sans-serif;
+    --f-mono: 'DM Mono', 'Fira Code', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 48px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .header-left h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .header-left p {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: var(--f-mono);
+  }
+  .header-badge {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid rgba(47,129,247,0.3);
+  }
+
+  /* ── Layout ── */
+  .main {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 77px);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 28px 0;
+    position: sticky;
+    top: 77px;
+    height: calc(100vh - 77px);
+    overflow-y: auto;
+  }
+  .sidebar-section {
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+  .sidebar-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 8px;
+    padding: 0 8px;
+  }
+  .client-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--f-body);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+  .client-btn:hover { background: var(--surface2); color: var(--text); }
+  .client-btn.active {
+    background: var(--surface2);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .client-btn.active::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border2);
+    margin: 16px 16px;
+  }
+
+  .step-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 24px;
+    cursor: pointer;
+    transition: all 0.12s;
+    color: var(--faint);
+    font-size: 12px;
+  }
+  .step-nav-item:hover { color: var(--muted); }
+  .step-nav-item.active { color: var(--text); }
+  .step-nav-num {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    font-family: var(--f-mono);
+  }
+  .step-nav-item.active .step-nav-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* ── Content ── */
+  .content {
+    padding: 32px 48px 80px;
+    max-width: 860px;
+  }
+
+  .client-view { display: none; }
+  .client-view.active { display: block; }
+
+  /* Client header */
+  .client-header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .client-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .client-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .meta-pill {
+    font-size: 12px;
+    font-family: var(--f-mono);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .meta-pill.site { border-color: var(--amber-dim); color: var(--amber); background: rgba(227,179,65,0.08); }
+  .meta-pill.tool { border-color: var(--accent-dim); color: var(--accent); background: rgba(47,129,247,0.08); }
+
+  /* Steps */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+
+  .step-card {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 0 16px;
+    position: relative;
+  }
+
+  .step-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .step-circle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--f-mono);
+    flex-shrink: 0;
+    border: 1px solid;
+    z-index: 1;
+  }
+  .step-line-v {
+    width: 1px;
+    flex: 1;
+    min-height: 20px;
+    opacity: 0.3;
+  }
+
+  .step-right { padding-bottom: 32px; }
+
+  .step-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding-top: 6px;
+  }
+  .step-title {
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .step-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .step-desc code {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    background: var(--surface2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--text);
+    border: 1px solid var(--border2);
+  }
+
+  /* Tags */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tag {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .tag-site  { color: var(--amber);  border-color: var(--amber-dim);  background: rgba(227,179,65,0.07); }
+  .tag-block { color: var(--green);  border-color: var(--green-dim);  background: rgba(63,185,80,0.07); }
+  .tag-bsite { color: var(--amber);  border-color: var(--amber-dim);  background: rgba(227,179,65,0.07); }
+  .tag-cf    { color: var(--purple); border-color: var(--purple-dim); background: rgba(163,113,247,0.07); }
+  .tag-tool  { color: var(--accent); border-color: var(--accent-dim); background: rgba(47,129,247,0.07); }
+
+  /* Info note */
+  .infonote {
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin: 10px 0;
+    line-height: 1.6;
+  }
+  .infonote code {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    background: var(--surface);
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--text);
+  }
+
+  /* Device grid */
+  .device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .device-card {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .device-card .dc-type {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .device-card .dc-api {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    color: var(--teal);
+    margin-bottom: 3px;
+  }
+  .device-card .dc-note {
+    font-size: 11px;
+    color: var(--faint);
+  }
+  .site-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--amber);
+    margin: 12px 0 6px;
+    font-family: var(--f-mono);
+  }
+
+  /* Result row */
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .result-card {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .result-card .rl { font-size: 11px; color: var(--faint); margin-bottom: 2px; }
+  .result-card .rv { font-size: 14px; font-weight: 500; color: var(--text); }
+
+  /* Files table */
+  .files-block {
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .files-block-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .files-block-header::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--faint);
+  }
+  .file-entry {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    border-bottom: 1px solid var(--border2);
+  }
+  .file-entry:last-child { border-bottom: none; }
+  .file-name-cell {
+    padding: 9px 14px;
+    border-right: 1px solid var(--border2);
+    font-family: var(--f-mono);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+  .file-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .file-role-cell {
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .file-role-cell code {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    background: var(--surface);
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--text);
+    border: 1px solid var(--border2);
+  }
+
+  /* Step color themes */
+  .s0 { --sc: #2f81f7; --sb: rgba(47,129,247,0.1); }
+  .s1 { --sc: #3fb950; --sb: rgba(63,185,80,0.1); }
+  .s2 { --sc: #a371f7; --sb: rgba(163,113,247,0.1); }
+  .s3 { --sc: #e3b341; --sb: rgba(227,179,65,0.1); }
+  .s4 { --sc: #f78166; --sb: rgba(247,129,102,0.1); }
+  .s5 { --sc: #39c5cf; --sb: rgba(57,197,207,0.1); }
+  .s6 { --sc: #db61a2; --sb: rgba(219,97,162,0.1); }
+  .s7 { --sc: #3fb950; --sb: rgba(63,185,80,0.1); }
+
+  .step-circle { background: var(--sb); color: var(--sc); border-color: var(--sc); }
+  .step-line-v { background: var(--sc); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .client-view.active .step-card {
+    animation: fadeUp 0.25s ease both;
+  }
+  .client-view.active .step-card:nth-child(1) { animation-delay: 0.03s; }
+  .client-view.active .step-card:nth-child(2) { animation-delay: 0.07s; }
+  .client-view.active .step-card:nth-child(3) { animation-delay: 0.11s; }
+  .client-view.active .step-card:nth-child(4) { animation-delay: 0.15s; }
+  .client-view.active .step-card:nth-child(5) { animation-delay: 0.19s; }
+  .client-view.active .step-card:nth-child(6) { animation-delay: 0.23s; }
+  .client-view.active .step-card:nth-child(7) { animation-delay: 0.27s; }
+  .client-view.active .step-card:nth-child(8) { animation-delay: 0.31s; }
+
+  @media (max-width: 700px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .content { padding: 20px; }
+    .header { padding: 16px 20px; }
+    .file-entry { grid-template-columns: 1fr; }
+    .file-name-cell { border-right: none; border-bottom: 1px solid var(--border2); }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>SOC Inventory Automation</h1>
+    <p>prefect.reduno.online &nbsp;·&nbsp; netbox.reduno.online &nbsp;·&nbsp; soc_inventory/</p>
+  </div>
+  <span class="header-badge">Technical Overview</span>
+</header>
+
+<div class="main">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Clients</div>
+      <button class="client-btn active" onclick="showClient('c1')">Client 1</button>
+      <button class="client-btn" onclick="showClient('c2')">Client 2</button>
+      <button class="client-btn" onclick="showClient('c3')">Client 3</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label" style="padding:0 24px;margin-bottom:8px;">Steps</div>
+    <div id="step-nav"></div>
+  </nav>
+
+  <!-- Content -->
+  <main class="content">
+    <div id="c1-view" class="client-view active"></div>
+    <div id="c2-view" class="client-view"></div>
+    <div id="c3-view" class="client-view"></div>
+  </main>
+
+</div>
+
+<script>
+const FILE_COLORS = {
+  "prefect.yaml":            "#2f81f7",
+  "playbook.yaml":           "#3fb950",
+  "field_map.yaml":          "#a371f7",
+  "soc_inventory_flow.py":   "#e3b341",
+  "run_task.py":             "#f78166",
+  "netbox_client.py":        "#39c5cf",
+  "field_map_loader.py":     "#a371f7",
+  "playbook_loader.py":      "#3fb950",
+  "create_blocks.py":        "#3fb950",
+  "scripts/*_inventory.py":  "#2f81f7",
+  "Prefect Blocks":          "#db61a2",
+  "Netbox API":              "#39c5cf",
+};
+
+const CLIENTS = {
+  c1: {
+    name: "Client 1",
+    sites: ["c1-office1","c1-dc1"],
+    tools: ["AD","GLPI","Trellix","Wazuh","Elastic","Nessus","Teramind","WSUS","FortiGate","vCenter"],
+    shared: ["client1-ad-main","client1-glpi-main","client1-trellix-main","client1-wazuh-main","client1-elastic-main","client1-nessus-main","client1-teramind-main"],
+    perSite: {
+      "c1-office1": ["client1-wsus-c1-office1","client1-fortigate-c1-office1"],
+      "c1-dc1":     ["client1-wsus-c1-dc1","client1-fortigate-c1-dc1","client1-vcenter-c1-dc1"],
+    },
+    devices: {
+      "c1-office1": [
+        {type:"Workstations", api:"dcim/devices?role=workstation", note:"domain-joined Windows laptops"},
+        {type:"Servers",      api:"dcim/devices?role=server",      note:"on-site servers"},
+        {type:"Appliances",   api:"dcim/devices?role=appliance",   note:"FortiGate firewall"},
+      ],
+      "c1-dc1": [
+        {type:"Servers",          api:"dcim/devices?role=server",            note:"physical + ESXi hosts"},
+        {type:"Appliances",       api:"dcim/devices?role=appliance",         note:"network/security gear"},
+        {type:"Virtual Machines", api:"virtualization/virtual-machines",     note:"all roles incl. virtual appliances"},
+      ],
+    },
+    fields: ["cf_ad_last_seen","cf_trellix_last_seen","cf_wsus_last_seen","cf_wazuh_last_seen","cf_elastic_last_seen","cf_nessus_last_seen","cf_fortigate_last_seen","cf_glpi_last_seen","cf_vcenter_last_seen","cf_teramind_last_seen"],
+  },
+  c2: {
+    name: "Client 2",
+    sites: ["c2-office1"],
+    tools: ["AD","GLPI","Trellix","Nessus","FortiGate"],
+    shared: ["client2-ad-main","client2-glpi-main","client2-trellix-main","client2-nessus-main"],
+    perSite: {
+      "c2-office1": ["client2-fortigate-c2-office1"],
+    },
+    devices: {
+      "c2-office1": [
+        {type:"Workstations", api:"dcim/devices?role=workstation", note:""},
+        {type:"Servers",      api:"dcim/devices?role=server",      note:""},
+        {type:"Appliances",   api:"dcim/devices?role=appliance",   note:"FortiGate firewall"},
+      ],
+    },
+    fields: ["cf_ad_last_seen","cf_trellix_last_seen","cf_nessus_last_seen","cf_fortigate_last_seen","cf_glpi_last_seen"],
+  },
+  c3: {
+    name: "Client 3",
+    sites: ["c3-office1","c3-dc1","c3-dc2"],
+    tools: ["AD","GLPI","Trellix","Teramind","MDM","WSUS","FortiGate","vCenter","Nessus"],
+    shared: ["client3-ad-main","client3-glpi-main","client3-trellix-main","client3-teramind-main"],
+    perSite: {
+      "c3-office1": ["client3-wsus-c3-office1","client3-fortigate-c3-office1","client3-mdm-main"],
+      "c3-dc1":     ["client3-wsus-c3-dc1","client3-vcenter-c3-dc1","client3-fortigate-c3-dc1","client3-nessus-c3-dc1"],
+      "c3-dc2":     ["client3-wsus-c3-dc2","client3-vcenter-c3-dc2","client3-fortigate-c3-dc2","client3-nessus-c3-dc2"],
+    },
+    devices: {
+      "c3-office1": [
+        {type:"Workstations", api:"dcim/devices?role=workstation", note:"MDM-enrolled laptops"},
+        {type:"Servers",      api:"dcim/devices?role=server",      note:""},
+        {type:"Appliances",   api:"dcim/devices?role=appliance",   note:"FortiGate firewall"},
+      ],
+      "c3-dc1": [
+        {type:"Servers",          api:"dcim/devices?role=server",        note:"physical + ESXi hosts"},
+        {type:"Appliances",       api:"dcim/devices?role=appliance",     note:""},
+        {type:"Virtual Machines", api:"virtualization/virtual-machines", note:"incl. virtual appliances"},
+      ],
+      "c3-dc2": [
+        {type:"Servers",          api:"dcim/devices?role=server",        note:"physical + ESXi hosts"},
+        {type:"Appliances",       api:"dcim/devices?role=appliance",     note:""},
+        {type:"Virtual Machines", api:"virtualization/virtual-machines", note:"incl. virtual appliances"},
+      ],
+    },
+    fields: ["cf_ad_last_seen","cf_trellix_last_seen","cf_wsus_last_seen","cf_nessus_last_seen","cf_fortigate_last_seen","cf_glpi_last_seen","cf_vcenter_last_seen","cf_teramind_last_seen","cf_mdm_last_seen"],
+  },
+};
+
+const STEP_NAMES = [
+  "Prefect triggers the run",
+  "Resolve tasks from playbook",
+  "Load credentials from vault",
+  "Query Netbox for devices",
+  "Run tool scripts",
+  "Match output to devices",
+  "PATCH Netbox custom fields",
+  "Log run summary",
+];
+
+function dot(color) {
+  return `<span class="file-dot" style="background:${color}"></span>`;
+}
+
+function fileRow(name, role) {
+  const c = FILE_COLORS[name] || "#484f58";
+  return `<div class="file-entry">
+    <div class="file-name-cell">${dot(c)}${name}</div>
+    <div class="file-role-cell">${role}</div>
+  </div>`;
+}
+
+function filesBlock(files) {
+  return `<div class="files-block">
+    <div class="files-block-header">Files used in this step</div>
+    ${files.map(f => fileRow(f[0], f[1])).join("")}
+  </div>`;
+}
+
+function tag(text, cls) {
+  return `<span class="tag ${cls}">${text}</span>`;
+}
+
+function noteBox(html) {
+  return `<div class="infonote">${html}</div>`;
+}
+
+function buildSteps(cid) {
+  const c = CLIENTS[cid];
+
+  const devSections = c.sites.map(s => {
+    const cards = (c.devices[s] || []).map(d =>
+      `<div class="device-card">
+        <div class="dc-type">${d.type}</div>
+        <div class="dc-api">${d.api}</div>
+        ${d.note ? `<div class="dc-note">${d.note}</div>` : ""}
+      </div>`
+    ).join("");
+    return `<div class="site-label">${s}</div><div class="device-grid">${cards}</div>`;
+  }).join("");
+
+  const allPerSiteBlocks = c.sites.flatMap(s =>
+    (c.perSite[s] || []).map(b => tag(b, "tag-bsite"))
+  ).join("");
+
+  return [
+    {
+      title: "Prefect triggers the run",
+      desc: `The <code>soc-inventory</code> flow starts — either on schedule (06:00 daily, Costa Rica time) or triggered manually from the Prefect UI or CLI. Prefect reads the deployment definition to know which flow to launch and with which parameters.`,
+      extra: noteBox(`The <code>netbox-api</code> block is loaded once at this point. The Netbox URL and API token are reused for all device queries throughout the run.`),
+      files: [
+        ["prefect.yaml", `Defines the deployment: schedule (<code>0 6 * * *</code>), work pool (<code>soc-pool</code>), entry point, and default parameters. Read by Prefect when you run <code>prefect deploy --all</code>.`],
+        ["soc_inventory_flow.py", `The master flow function Prefect calls. Loads the playbook, reads Netbox credentials, and dispatches all tasks for this run.`],
+        ["Prefect Blocks", `<code>netbox-api</code> block is loaded here — contains the Netbox URL and API token used for all device queries.`],
+      ]
+    },
+    {
+      title: "Resolve tasks from playbook",
+      desc: `The playbook is loaded and parsed. Every enabled client → site → tool combination becomes one resolved task. ${c.name} has ${c.sites.length} site(s) and ${c.tools.length} tool(s) — producing ${c.sites.reduce((n,s) => n + c.shared.length + (c.perSite[s]||[]).length, 0)} tasks total.`,
+      extra: `<div class="tags" style="margin-bottom:8px">${c.sites.map(s => tag(s,"tag-site")).join("")}</div>
+<div style="font-size:12px;color:var(--muted);margin-bottom:5px">Shared credential blocks (same credentials across all sites):</div>
+<div class="tags" style="margin-bottom:8px">${c.shared.map(b => tag(b,"tag-block")).join("")}</div>
+<div style="font-size:12px;color:var(--muted);margin-bottom:5px">Per-site credential blocks (specific instance per site):</div>
+<div class="tags">${allPerSiteBlocks}</div>`,
+      files: [
+        ["playbook.yaml", `Defines every client, their sites, which tools run per site, and which Prefect block holds credentials. <strong>This is the only file you edit</strong> when adding a new client or site.`],
+        ["playbook_loader.py", `Reads playbook.yaml, resolves <code>resource_ref</code> aliases (shared credentials), merges params, and returns a flat list of <code>ResolvedTask</code> objects.`],
+        ["soc_inventory_flow.py", `Calls <code>PlaybookLoader</code>, applies any CLI filters (<code>--client</code>, <code>--site</code>, <code>--tool</code>), then submits each resolved task to Prefect.`],
+      ]
+    },
+    {
+      title: "Load credentials from vault",
+      desc: `Before calling any tool script, the runner loads the credential block for that specific task from the Prefect vault. Each task gets only its own credentials — no task can see another client's secrets.`,
+      extra: noteBox(`Block name comes directly from the playbook entry. Example: task <code>${cid}/c1-dc1/wsus</code> loads block <code>${cid}-wsus-c1-dc1</code>. The runner never constructs block names — it reads them verbatim from the playbook.`),
+      files: [
+        ["playbook.yaml", `The <code>block:</code> field in each inventory source names the exact Prefect block to load for credentials.`],
+        ["run_task.py", `Calls <code>Secret.load(block_name)</code> to retrieve the credential dict, then passes it to the tool script as the <code>credentials</code> argument.`],
+        ["Prefect Blocks", `Where all credentials live — one block per tool per client. Created once with <code>create_blocks.py</code>. Re-run only when a password rotates.`],
+        ["create_blocks.py", `One-time setup script that registers all credential blocks in the Prefect server database. Edit values and re-run when credentials change.`],
+      ]
+    },
+    {
+      title: "Query Netbox for devices",
+      desc: `The runner calls the Netbox API filtered by <code>tenant=${cid}</code> and the site slug. Returns the device list the tool scripts will match against. Two endpoints are always queried — physical devices and virtual machines.`,
+      extra: devSections,
+      files: [
+        ["netbox_client.py", `Sends GET requests to <code>dcim/devices</code> and <code>virtualization/virtual-machines</code> filtered by tenant + site + device_role. Also fetches interface IPs for matching. This is the <strong>only file that talks to Netbox</strong>.`],
+        ["field_map.yaml", `Controls which <code>device_role</code> slugs each tool covers — so the runner only queries Netbox for relevant device types. Teramind only queries workstations. vCenter only queries servers and VMs.`],
+        ["field_map_loader.py", `Reads field_map.yaml and exposes <code>is_applicable()</code> checks. Used here to decide which device roles to include in the Netbox query.`],
+        ["Netbox API", `Source of truth — returns the canonical device list for this tenant + site. The runner writes back to the same API in step 7.`],
+      ]
+    },
+    {
+      title: "Run tool scripts",
+      desc: `Each tool's <code>fetch()</code> function is called with its credentials and params. Returns a dict keyed by hostname. All tool tasks for a site run concurrently in Prefect. The field map controls which tool runs against which device type.`,
+      extra: `<div class="tags" style="margin-bottom:10px">${c.tools.map(t => tag(t,"tag-tool")).join("")}</div>
+${noteBox(`If a tool returns zero records (connection failed, unreachable, no devices in scope) the task logs a warning and moves on — it does <strong>not</strong> block other tasks from completing.`)}`,
+      files: [
+        ["scripts/*_inventory.py", `One file per tool. Each exposes <code>async def fetch(credentials, **params) → dict[hostname, data]</code>. No Netbox knowledge, no client knowledge — just connect, collect, and return.`],
+        ["field_map.yaml", `Controls which tool applies to which device_role. Also defines OS conditions — WSUS only runs if <code>os_family=windows</code>.`],
+        ["field_map_loader.py", `<code>is_applicable(device, tool_map)</code> checks device role and OS before the script is called. Skipped devices are logged at debug level.`],
+        ["run_task.py", `Dynamically imports the correct script via <code>SCRIPT_REGISTRY</code>, calls <code>fetch()</code>, and passes the result to the matcher.`],
+        ["playbook.yaml", `Provides the params passed to <code>fetch()</code> — e.g. <code>ou_filter</code> for AD, <code>group_filter</code> for Trellix, <code>target_type</code> for WSUS.`],
+      ]
+    },
+    {
+      title: "Match tool output to Netbox devices",
+      desc: `Each record returned by the tool is matched to a Netbox device using ordered keys. First match wins. Devices with no match are logged as warnings and skipped — they do not fail the run.`,
+      extra: noteBox(`Match order: <code>hostname → ip_address → mac_address (if registered) → vm_name (VMs only) → serial (GLPI only)</code><br><br>
+vCenter VMs use a different order: <code>vm_name → name → ip_address</code> — because the vCenter display name rarely matches the guest OS hostname. FortiGate adds MAC as a last resort since it does not always return hostnames.`),
+      files: [
+        ["netbox_client.py", `<code>match()</code> builds hostname, IP, MAC, vm_name, and serial indexes from the Netbox device list, then walks each tool record through the ordered match keys until a hit is found.`],
+        ["field_map.yaml", `The <code>match_keys</code> and <code>vm_match_keys</code> lists per tool define the match order. FortiGate tries MAC last. Nessus tries IP first.`],
+        ["field_map_loader.py", `<code>get_match_keys(device, tool_map)</code> returns the correct ordered list depending on whether the object is a physical device or a VM.`],
+      ]
+    },
+    {
+      title: "PATCH Netbox custom fields",
+      desc: `For each matched device the runner sends one PATCH request containing only the custom fields owned by the current tool. No other fields are touched — AD never overwrites a Trellix field, Trellix never overwrites a WSUS field.`,
+      extra: `<div class="tags" style="margin-bottom:10px">${c.fields.map(f => tag(f,"tag-cf")).join("")}</div>
+${noteBox(`Dry-run mode skips this step and logs what <em>would</em> be written instead. Run with <code>--param dry_run=true</code> to validate without touching Netbox.`)}`,
+      files: [
+        ["netbox_client.py", `<code>patch_custom_fields()</code> sends <code>PATCH /api/dcim/devices/{id}/</code> or <code>/api/virtualization/virtual-machines/{id}/</code> with only the <code>custom_fields</code> dict for this tool.`],
+        ["field_map.yaml", `The <code>fields:</code> mapping per tool defines exactly which script output key writes to which Netbox custom field name (e.g. <code>ad_last_seen → cf_ad_last_seen</code>).`],
+        ["field_map_loader.py", `<code>get_fields(device, tool_map)</code> returns the correct mapping — vCenter uses different fields for ESXi hosts vs guest VMs.`],
+        ["Netbox API", `Receives the PATCH. Updates the custom field values on the device record. All other fields on the device remain completely unchanged.`],
+      ]
+    },
+    {
+      title: "Log run summary",
+      desc: `Every task reports back its counts. The master flow aggregates them and logs the full run summary. View per-task details or per-flow-run logs in the Prefect UI at prefect.reduno.online.`,
+      extra: `<div class="result-grid">
+<div class="result-card"><div class="rl">per task</div><div class="rv">records fetched</div></div>
+<div class="result-card"><div class="rl">per task</div><div class="rv">devices matched</div></div>
+<div class="result-card"><div class="rl">per task</div><div class="rv">fields patched</div></div>
+</div>
+${noteBox(`Failed tasks are counted separately. A task failure (e.g. tool unreachable) does <strong>not</strong> stop other tasks — the run continues and reports the failure count at the end. Each task retries twice with a 60-second delay before being marked as failed.`)}`,
+      files: [
+        ["soc_inventory_flow.py", `Collects results from all task futures, sums patched / matched / failed counts, and logs the final summary line.`],
+        ["run_task.py", `Each task returns a summary dict with <code>tool_records</code>, <code>applicable</code>, <code>matched</code>, <code>patched</code>, <code>skipped</code>, <code>failed</code> counts.`],
+        ["prefect.yaml", `Defines retry behaviour — <code>retries=2</code>, <code>retry_delay_seconds=60</code> per task.`],
+      ]
+    },
+  ];
+}
+
+function renderClient(cid) {
+  const c = CLIENTS[cid];
+  const steps = buildSteps(cid);
+  const siteCount = c.sites.length;
+  const toolCount = c.tools.length;
+
+  const metaPills = [
+    ...c.sites.map(s => `<span class="meta-pill site">${s}</span>`),
+    ...c.tools.map(t => `<span class="meta-pill tool">${t}</span>`),
+  ].join("");
+
+  const stepsHtml = steps.map((s, i) => {
+    const cls = `s${i % 8}`;
+    const last = i === steps.length - 1;
+    return `<div class="step-card ${cls}" id="${cid}-step-${i}">
+      <div class="step-left">
+        <div class="step-circle">${i+1}</div>
+        ${!last ? `<div class="step-line-v"></div>` : `<div style="height:8px"></div>`}
+      </div>
+      <div class="step-right">
+        <div class="step-title-row">
+          <div class="step-title">${s.title}</div>
+        </div>
+        <div class="step-desc">${s.desc}</div>
+        ${s.extra || ""}
+        ${filesBlock(s.files)}
+      </div>
+    </div>`;
+  }).join("");
+
+  return `<div class="client-header">
+    <h2>${c.name}</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">${siteCount} site(s) &nbsp;·&nbsp; ${toolCount} tool(s) &nbsp;·&nbsp; ${c.fields.length} Netbox custom fields updated</p>
+    <div class="client-meta">${metaPills}</div>
+  </div>
+  <div class="steps">${stepsHtml}</div>`;
+}
+
+function buildStepNav() {
+  const nav = document.getElementById("step-nav");
+  nav.innerHTML = STEP_NAMES.map((name, i) =>
+    `<div class="step-nav-item" id="nav-${i}" onclick="scrollToStep(${i})">
+      <span class="step-nav-num">${i+1}</span>
+      <span>${name}</span>
+    </div>`
+  ).join("");
+}
+
+let currentClient = "c1";
+
+function showClient(cid) {
+  currentClient = cid;
+  document.querySelectorAll(".client-view").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".client-btn").forEach(el => el.classList.remove("active"));
+
+  const view = document.getElementById(`${cid}-view`);
+  if (!view.innerHTML) view.innerHTML = renderClient(cid);
+  view.classList.add("active");
+
+  document.querySelector(`.client-btn[onclick="showClient('${cid}')"]`).classList.add("active");
+  document.querySelector(".content").scrollTop = 0;
+  updateStepNav(0);
+}
+
+function scrollToStep(i) {
+  const el = document.getElementById(`${currentClient}-step-${i}`);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    updateStepNav(i);
+  }
+}
+
+function updateStepNav(active) {
+  document.querySelectorAll(".step-nav-item").forEach((el, i) => {
+    el.classList.toggle("active", i === active);
+  });
+}
+
+// Track scroll to update step nav
+function onScroll() {
+  const steps = document.querySelectorAll(`#${currentClient}-view .step-card`);
+  let closest = 0;
+  let closestDist = Infinity;
+  steps.forEach((el, i) => {
+    const rect = el.getBoundingClientRect();
+    const dist = Math.abs(rect.top - 120);
+    if (dist < closestDist) { closestDist = dist; closest = i; }
+  });
+  updateStepNav(closest);
+}
+
+document.querySelector(".content").addEventListener("scroll", onScroll);
+
+// Init
+buildStepNav();
+document.getElementById("c1-view").innerHTML = renderClient("c1");
+updateStepNav(0);
+</script>
+</body>
+</html>

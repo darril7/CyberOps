@@ -1,0 +1,66 @@
+# prefect.yaml
+# Prefect deployment configuration
+# Docs: https://docs.prefect.io/latest/concepts/deployments/
+
+name: soc-inventory
+prefect-version: "2.19.0"
+
+# ── Build ─────────────────────────────────────────────────────────────────────
+build:
+  - prefect.deployments.steps.run_shell_script:
+      id: install-deps
+      script: pip install -r requirements.txt
+      stream_output: true
+
+# ── Push ──────────────────────────────────────────────────────────────────────
+# If using Prefect Cloud with remote storage (S3, GCS, etc.), configure here.
+# For local/self-hosted agent, leave push empty.
+push: []
+
+# ── Pull ──────────────────────────────────────────────────────────────────────
+pull:
+  - prefect.deployments.steps.set_working_directory:
+      directory: /opt/soc_inventory     # where code lives on the worker
+
+# ── Deployments ───────────────────────────────────────────────────────────────
+deployments:
+
+  # Daily full run — all customers, all tools
+  - name: daily-full
+    entrypoint: flows/soc_inventory_flow.py:soc_inventory
+    description: "Daily full inventory — all customers, all tools"
+    schedule:
+      cron: "0 6 * * *"                # 06:00 every day
+      timezone: "America/Costa_Rica"
+    parameters:
+      dry_run: false
+    work_pool:
+      name: soc-pool
+    tags:
+      - soc
+      - inventory
+      - daily
+
+  # On-demand: single customer
+  - name: on-demand-customer
+    entrypoint: flows/soc_inventory_flow.py:soc_inventory
+    description: "On-demand run for a specific customer"
+    parameters:
+      dry_run: false
+    work_pool:
+      name: soc-pool
+    tags:
+      - soc
+      - on-demand
+
+  # Dry run — validate without writing to Netbox
+  - name: dry-run
+    entrypoint: flows/soc_inventory_flow.py:soc_inventory
+    description: "Dry run — logs what would be patched, no writes"
+    parameters:
+      dry_run: true
+    work_pool:
+      name: soc-pool
+    tags:
+      - soc
+      - dry-run

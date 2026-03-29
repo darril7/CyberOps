@@ -1,0 +1,20 @@
+# SOC Inventory — Python dependencies
+# Install: pip install -r requirements.txt
+
+# Prefect
+prefect>=2.19.0
+
+# HTTP client (async)
+httpx>=0.27.0
+
+# YAML
+pyyaml>=6.0
+
+# LDAP (AD)
+ldap3>=2.9.1
+
+# vCenter
+pyVmomi>=8.0.0
+
+# Async support
+anyio>=4.0.0
