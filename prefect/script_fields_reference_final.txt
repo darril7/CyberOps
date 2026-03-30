@@ -1,0 +1,133 @@
+========================================================================
+SCRIPT OUTPUT FIELDS REFERENCE — what fetch() must return per tool
+========================================================================
+
+Rule: dict key on the LEFT must exactly match the key in field_map.yaml
+      field_map runner maps it to the Netbox custom field on the RIGHT
+      Return value None/null is safe — runner skips null fields
+
+┌─ AD  [identity]
+│  Covers  : server, workstation + VMs
+│  Match   : hostname → ip_address
+│  Return dict keys:
+│    last_logon                 → cf_ad_last_seen                          # datetime str ISO-8601
+│    os_name                    → cf_ad_os                                 # str
+│    status                     → cf_ad_enabled                            # str
+│    name                       → cf_ad_dns_name                           # str
+│    ip_address                 → cf_ad_ip_address                         # str dotted-decimal
+└──────────────────────────────────────────────────────────────────────
+
+┌─ TRELLIX  [av-edr]
+│  Covers  : server, workstation + VMs
+│  Match   : hostname → ip_address
+│  Return dict keys:
+│    last_poll                  → cf_trellix_last_seen                     # datetime str ISO-8601
+│    mac_address                → cf_trellix_mac                           # str colon-separated aa:bb:cc:dd:ee:ff
+│    os_version                 → cf_trellix_os_version                    # str
+│    agent_version              → cf_trellix_agent_ver                     # str
+│    malware_status             → cf_trellix_malware_status                # str
+│    ip_address                 → cf_trellix_ip_address                    # str dotted-decimal
+│    hostname                   → cf_trellix_hostname                      # str short name no domain
+└──────────────────────────────────────────────────────────────────────
+
+┌─ TERAMIND  [dlp-uam]
+│  Covers  : workstation + VMs
+│  Match   : hostname → ip_address
+│  Return dict keys:
+│    last_seen                  → cf_teramind_last_seen                    # datetime str ISO-8601
+│    status                     → cf_teramind_status                       # str
+│    agent_version              → cf_teramind_agent_version                # str
+│    mac_address                → cf_teramind_mac                          # str colon-separated aa:bb:cc:dd:ee:ff
+│    OS_version                 → cf_teramind_OS                           # str
+│    FQDN                       → cf_teramind_FQDN                         # str full domain name
+│    hostname                   → cf_teramind_hostname                     # str short name no domain
+│    ip_address                 → cf_teramind_ip                           # str dotted-decimal
+└──────────────────────────────────────────────────────────────────────
+
+┌─ MDM  [mdm]
+│  Covers  : workstation
+│  Match   : hostname
+│  Return dict keys:
+│    last_seen                  → cf_mdm_last_seen                         # datetime str ISO-8601
+│    hostname                   → cf_mdm_hostname                          # str short name no domain
+│    os_version                 → cf_mdm_os                                # str
+└──────────────────────────────────────────────────────────────────────
+
+┌─ WSUS  [patch]
+│  Covers  : server, workstation + VMs
+│  Match   : hostname → ip_address
+│  Return dict keys:
+│    last_reported              → cf_wsus_last_reported                    # datetime str ISO-8601
+│    last_sync                  → cf_wsus_last_sync                        # datetime str ISO-8601
+│    ip_address                 → cf_wsus_ip                               # str dotted-decimal
+│    hostname                   → cf_wsus_hostname                         # str short name no domain
+└──────────────────────────────────────────────────────────────────────
+
+┌─ WAZUH  [hids]
+│  Covers  : server, workstation + VMs
+│  Match   : hostname → ip_address
+│  Return dict keys:
+│    last_seen                  → cf_wazuh_last_seen                       # datetime str ISO-8601
+│    agent_id                   → cf_wazuh_agent_id                        # str
+│    agent_ver                  → cf_wazuh_agent_ver                       # str
+│    status                     → cf_wazuh_status                          # str
+│    hostname                   → cf_wazuh_hostname                        # str short name no domain
+│    ip_address                 → cf_wazuh_ip                              # str dotted-decimal
+│    os_version                 → cf_wazuh_os                              # str
+└──────────────────────────────────────────────────────────────────────
+
+┌─ ELASTIC  [siem-log]
+│  Covers  : server, workstation, appliance + VMs
+│  Match   : hostname → ip_address
+│  Return dict keys:
+│    last_seen                  → cf_elastic_last_seen                     # datetime str ISO-8601
+│    agent_ver                  → cf_elastic_agent_ver                     # str
+│    os_version                 → cf_elastic_os                            # str
+│    hostname                   → cf_elastic_hostname                      # str short name no domain
+│    ip_address                 → cf_elastic_ip                            # str dotted-decimal
+│    mac_address                → cf_elastic_mac                           # str colon-separated aa:bb:cc:dd:ee:ff
+└──────────────────────────────────────────────────────────────────────
+
+┌─ NESSUS  [vulnerability]
+│  Covers  : server, appliance + VMs
+│  Match   : ip_address → hostname → mac_address
+│  Return dict keys:
+│    hostname                   → cf_nessus_hostname                       # str short name no domain
+│    nessus_last_scan           → cf_nessus_last_scan                      # datetime str ISO-8601
+│    ip_address                 → cf_nessus_ip                             # str dotted-decimal
+│    mac_address                → cf_nessus_mac                            # str colon-separated aa:bb:cc:dd:ee:ff
+└──────────────────────────────────────────────────────────────────────
+
+┌─ FORTIGATE  [firewall-utm]
+│  Covers  : server, workstation, appliance + VMs
+│  Match   : ip_address → mac_address → hostname
+│  Return dict keys:
+│    last_seen                  → cf_fortigate_last_seen                   # datetime str ISO-8601
+│    is_online                  → cf_fortigate_status                      # str (e.g. online/offline)
+│    ip_address                 → cf_fortigate_ip                          # str dotted-decimal
+│    mac_address                → cf_fortigate_mac                         # str colon-separated aa:bb:cc:dd:ee:ff
+│    hostname                   → cf_fortigate_hostname                    # str short name no domain
+└──────────────────────────────────────────────────────────────────────
+
+┌─ VCENTER  [virtualization]
+│  Covers  : server + VMs
+│  Match   : ip_address → hostname
+│  Return dict keys:
+│    last_seen                  → cf_vcenter_last_seen                     # datetime str ISO-8601
+│    power                      → cf_vcenter_power_state                   # str (e.g. poweredOn/Off)
+│    host                       → cf_vcenter_host                          # str ESXi host IP
+│    ip_address                 → cf_vcenter_ip                            # str dotted-decimal
+│    hostname                   → cf_vcenter_hostname                      # str short name no domain
+│    name                       → cf_vcenter_name                          # str  ← vm_fields only
+└──────────────────────────────────────────────────────────────────────
+
+┌─ GLPI  [itsm-asset]
+│  Covers  : server, workstation
+│  Match   : hostname → ip_address
+│  Return dict keys:
+│    last_seen                  → cf_glpi_last_seen                        # datetime str ISO-8601
+│    status                     → cf_glpi_status                           # str
+│    hostname                   → cf_glpi_hostname                         # str short name no domain
+│    ip_address                 → cf_glpi_ip                               # str dotted-decimal
+│    device_id                  → cf_glpi_id                               # int
+└──────────────────────────────────────────────────────────────────────

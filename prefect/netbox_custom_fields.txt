@@ -1,0 +1,95 @@
+# =========================================================
+# NETBOX CUSTOM FIELDS — Full List
+# =========================================================
+# Create all of these under:
+#   Netbox → Customization → Custom Fields → Add
+#   Object types: dcim | device  AND  virtualization | virtual machine
+#   (unless noted as device-only or VM-only)
+#
+# Type guide:
+#   date/time → Date & Time
+#   text      → Text
+#   boolean   → Boolean
+#   integer   → Integer
+# =========================================================
+
+# ── AD (server  workstation + VMs)
+  cf_ad_last_seen                           type: date/time   label: "ad last seen"
+  cf_ad_os                                  type: text        label: "ad os"
+  cf_ad_enabled                             type: boolean     label: "ad enabled"
+  cf_ad_dns_name                            type: text        label: "ad dns name"
+  cf_ip_address                             type: text        label: "ip address" ← already in Netbox
+
+# ── TRELLIX (server  workstation + VMs)
+  cf_trellix_last_seen                      type: date/time   label: "trellix last seen"
+  cf_trellix_mac                            type: text        label: "trellix mac"
+  cf_trellix_os_version                     type: text        label: "trellix os version"
+  cf_trellix_agent_ver                      type: text        label: "trellix agent ver"
+  cf_trellix_malware_status                 type: text        label: "trellix malware status"
+  cf_trellix_ip_address                     type: text        label: "trellix ip address"
+  cf_trellix_hostname                       type: text        label: "trellix hostname"
+
+# ── TERAMIND (workstation)
+  cf_teramind_last_seen                     type: date/time   label: "teramind last seen"
+  cf_teramind_status                        type: text        label: "teramind status"
+  cf_teramind_agent_version                 type: text        label: "teramind agent version"
+  cf_teramind_mac                           type: text        label: "teramind mac"
+  cf_teramind_OS                            type: text        label: "teramind OS"
+  cf_teramind_FQDN                          type: text        label: "teramind FQDN"
+  cf_teramind_hostname                      type: text        label: "teramind hostname"
+  cf_teramind_ip                            type: text        label: "teramind ip"
+
+# ── MDM (workstation)
+  cf_mdm_last_seen                          type: date/time   label: "mdm last seen"
+  cf_mdm_hostname                           type: text        label: "mdm hostname"
+  cf_mdm_os                                 type: text        label: "mdm os"
+
+# ── WSUS (server  workstation + VMs)
+  cf_wsus_last_reported                     type: date/time   label: "wsus last reported"
+  cf_wsus_last_sync                         type: date/time   label: "wsus last sync"
+  cf_wsus_ip                                type: text        label: "wsus ip"
+  cf_wsus_hostname                          type: text        label: "wsus hostname"
+
+# ── WAZUH (server  workstation + VMs)
+  cf_wazuh_last_seen                        type: date/time   label: "wazuh last seen"
+  cf_wazuh_agent_id                         type: text        label: "wazuh agent id"
+  cf_wazuh_agent_ver                        type: text        label: "wazuh agent ver"
+  cf_wazuh_status                           type: text        label: "wazuh status"
+  cf_wazuh_hostname                         type: text        label: "wazuh hostname"
+  cf_wazuh_ip                               type: text        label: "wazuh ip"
+  cf_wazuh_os                               type: text        label: "wazuh os"
+
+# ── ELASTIC (server  workstation  appliance + VMs)
+  cf_elastic_last_seen                      type: date/time   label: "elastic last seen"
+  cf_elastic_agent_ver                      type: text        label: "elastic agent ver"
+  cf_elastic_os                             type: text        label: "elastic os"
+  cf_elastic_hostname                       type: text        label: "elastic hostname"
+  cf_elastic_ip                             type: text        label: "elastic ip"
+  cf_elastic_mac                            type: text        label: "elastic mac"
+
+# ── NESSUS (server  appliance + VMs)
+  cf_nessus_last_seen                       type: date/time   label: "nessus last seen"
+  cf_nessus_last_scan                       type: date/time   label: "nessus last scan"
+  cf_nessus_ip                              type: text        label: "nessus ip"
+  cf_nessus_mac                             type: text        label: "nessus mac"
+
+# ── FORTIGATE (server  workstation  appliance + VMs)
+  cf_fortigate_last_seen                    type: date/time   label: "fortigate last seen"
+  cf_fortigate_status                       type: text        label: "fortigate status"
+  cf_fortigate_mac                          type: text        label: "fortigate mac"
+  cf_fortigate_hostname                     type: text        label: "fortigate hostname"
+
+# ── VCENTER (server + VMs)
+  cf_vcenter_last_seen                      type: date/time   label: "vcenter last seen"
+  cf_vcenter_power_state                    type: text        label: "vcenter power state"
+  cf_vcenter_host                           type: text        label: "vcenter host"
+  cf_vcenter_ip                             type: text        label: "vcenter ip"
+  cf_vcenter_hostname                       type: text        label: "vcenter hostname"
+  cf_vcenter_name                           type: text        label: "vcenter name"
+
+# ── GLPI (server  workstation)
+  cf_glpi_last_seen                         type: date/time   label: "glpi last seen"
+  cf_glpi_status                            type: text        label: "glpi status"
+  cf_glpi_hostname                          type: text        label: "glpi hostname"
+  cf_glpi_ip                                type: text        label: "glpi ip"
+  cf_glpi_id                                type: integer     label: "glpi id"

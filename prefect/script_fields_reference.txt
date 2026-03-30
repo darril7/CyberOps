@@ -1,0 +1,125 @@
+# =========================================================
+# SCRIPT OUTPUT FIELDS REFERENCE
+# =========================================================
+# Each script's fetch() must return a dict keyed by hostname.
+# The VALUE dict must contain these exact keys so the runner
+# can map them to Netbox custom fields via field_map.yaml.
+#
+# Format:  script_key  →  cf_netbox_field  (data type)
+# =========================================================
+
+# ── AD — IDENTITY
+# Covers: server, workstation + VMs
+# Match keys: hostname → ip_address
+# Return dict must include:
+  last_logon                 →  cf_ad_last_seen                           # datetime str (ISO-8601)
+  os_name                    →  cf_ad_os                                  # str
+  status                     →  cf_ad_enabled                             # str
+  name                       →  cf_ad_dns_name                            # str
+  ip_address                 →  cf_ip_address                             # str (dotted decimal)
+
+# ── TRELLIX — AV-EDR
+# Covers: server, workstation + VMs
+# Match keys: hostname → ip_address
+# Return dict must include:
+  last_poll                  →  cf_trellix_last_seen                      # datetime str (ISO-8601)
+  mac_address                →  cf_trellix_mac                            # str (colon-separated)
+  os_version                 →  cf_trellix_os_version                     # str
+  agent_version              →  cf_trellix_agent_ver                      # str
+  malware_status             →  cf_trellix_malware_status                 # str
+  ip_address                 →  cf_trellix_ip_address                     # str (dotted decimal)
+  hostname                   →  cf_trellix_hostname                       # str (short, no domain)
+
+# ── TERAMIND — DLP-UAM
+# Covers: workstation
+# Match keys: hostname → ip_address
+# Return dict must include:
+  last_seen                  →  cf_teramind_last_seen                     # datetime str (ISO-8601)
+  status                     →  cf_teramind_status                        # str
+  agent_version              →  cf_teramind_agent_version                 # str
+  mac_address                →  cf_teramind_mac                           # str (colon-separated)
+  OS_version                 →  cf_teramind_OS                            # str
+  FQDN                       →  cf_teramind_FQDN                          # str
+  hostname                   →  cf_teramind_hostname                      # str (short, no domain)
+  ip_address                 →  cf_teramind_ip                            # str (dotted decimal)
+
+# ── MDM — MDM
+# Covers: workstation
+# Match keys: hostname
+# Return dict must include:
+  last_seen                  →  cf_mdm_last_seen                          # datetime str (ISO-8601)
+  hostname                   →  cf_mdm_hostname                           # str (short, no domain)
+  os_version                 →  cf_mdm_os                                 # str
+
+# ── WSUS — PATCH
+# Covers: server, workstation + VMs
+# Match keys: hostname → ip_address
+# Return dict must include:
+  last_reported              →  cf_wsus_last_reported                     # datetime str (ISO-8601)
+  last_sync                  →  cf_wsus_last_sync                         # datetime str (ISO-8601)
+  ip_address                 →  cf_wsus_ip                                # str (dotted decimal)
+  hostname                   →  cf_wsus_hostname                          # str (short, no domain)
+
+# ── WAZUH — HIDS
+# Covers: server, workstation + VMs
+# Match keys: hostname → ip_address
+# Return dict must include:
+  last_seen                  →  cf_wazuh_last_seen                        # datetime str (ISO-8601)
+  agent_id                   →  cf_wazuh_agent_id                         # str
+  agent_ver                  →  cf_wazuh_agent_ver                        # str
+  status                     →  cf_wazuh_status                           # str
+  hostname                   →  cf_wazuh_hostname                         # str (short, no domain)
+  ip_address                 →  cf_wazuh_ip                               # str (dotted decimal)
+  os_version                 →  cf_wazuh_os                               # str
+
+# ── ELASTIC — SIEM-LOG
+# Covers: server, workstation, appliance + VMs
+# Match keys: hostname → ip_address
+# Return dict must include:
+  last_seen                  →  cf_elastic_last_seen                      # datetime str (ISO-8601)
+  agent_ver                  →  cf_elastic_agent_ver                      # str
+  os_version                 →  cf_elastic_os                             # str
+  hostname                   →  cf_elastic_hostname                       # str (short, no domain)
+  ip_address                 →  cf_elastic_ip                             # str (dotted decimal)
+  mac_address                →  cf_elastic_mac                            # str (colon-separated)
+
+# ── NESSUS — VULNERABILITY
+# Covers: server, appliance + VMs
+# Match keys: ip_address → hostname → mac_address
+# Return dict must include:
+  last_seen                  →  cf_nessus_last_seen                       # datetime str (ISO-8601)
+  nessus_last_scan           →  cf_nessus_last_scan                       # datetime str (ISO-8601)
+  ip_address                 →  cf_nessus_ip                              # str (dotted decimal)
+  mac_address                →  cf_nessus_mac                             # str (colon-separated)
+
+# ── FORTIGATE — FIREWALL-UTM
+# Covers: server, workstation, appliance + VMs
+# Match keys: ip_address → mac_address → hostname
+# Return dict must include:
+  last_seen                  →  cf_fortigate_last_seen                    # datetime str (ISO-8601)
+  status                     →  cf_fortigate_status                       # str
+  mac_address                →  cf_fortigate_mac                          # str (colon-separated)
+  hostname                   →  cf_fortigate_hostname                     # str (short, no domain)
+# Also needed for matching (not written to Netbox):
+  ip_address                 # used for device matching only
+
+# ── VCENTER — VIRTUALIZATION
+# Covers: server + VMs
+# Match keys: ip_address → hostname
+# Return dict must include:
+  last_seen                  →  cf_vcenter_last_seen                      # datetime str (ISO-8601)
+  power                      →  cf_vcenter_power_state                    # str
+  host                       →  cf_vcenter_host                           # str (IP of ESXi host)
+  ip_address                 →  cf_vcenter_ip                             # str (dotted decimal)
+  hostname                   →  cf_vcenter_hostname                       # str (short, no domain)
+  name                       →  cf_vcenter_name                           # str  ← VMs only
+
+# ── GLPI — ITSM-ASSET
+# Covers: server, workstation
+# Match keys: hostname → ip_address
+# Return dict must include:
+  last_seen                  →  cf_glpi_last_seen                         # datetime str (ISO-8601)
+  status                     →  cf_glpi_status                            # str
+  hostname                   →  cf_glpi_hostname                          # str (short, no domain)
+  ip_address                 →  cf_glpi_ip                                # str (dotted decimal)
+  device_id                  →  cf_glpi_id                                # int

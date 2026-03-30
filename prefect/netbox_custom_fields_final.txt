@@ -1,0 +1,91 @@
+======================================================================
+NETBOX CUSTOM FIELDS — FINAL LIST (60 fields)
+======================================================================
+
+Create under: Customization → Custom Fields → Add
+Object types: dcim > device   AND   virtualization > virtual machine
+              (apply both unless marked device-only or vm-only)
+
+Custom Field Name                        Type           Label (suggested)
+----------------------------------------------------------------------
+  ── AD ──
+  cf_ad_dns_name                           Text           ad dns name
+  cf_ad_enabled                            Boolean        ad enabled
+  cf_ad_ip_address                         Text           ad ip address
+  cf_ad_last_seen                          Date & Time    ad last seen
+  cf_ad_os                                 Text           ad os
+
+  ── ELASTIC ──
+  cf_elastic_agent_ver                     Text           elastic agent ver
+  cf_elastic_hostname                      Text           elastic hostname
+  cf_elastic_ip                            Text           elastic ip
+  cf_elastic_last_seen                     Date & Time    elastic last seen
+  cf_elastic_mac                           Text           elastic mac
+  cf_elastic_os                            Text           elastic os
+
+  ── FORTIGATE ──
+  cf_fortigate_hostname                    Text           fortigate hostname
+  cf_fortigate_ip                          Text           fortigate ip
+  cf_fortigate_last_seen                   Date & Time    fortigate last seen
+  cf_fortigate_mac                         Text           fortigate mac
+  cf_fortigate_status                      Text           fortigate status
+
+  ── GLPI ──
+  cf_glpi_hostname                         Text           glpi hostname
+  cf_glpi_id                               Integer        glpi id
+  cf_glpi_ip                               Text           glpi ip
+  cf_glpi_last_seen                        Date & Time    glpi last seen
+  cf_glpi_status                           Text           glpi status
+
+  ── MDM ──
+  cf_mdm_hostname                          Text           mdm hostname
+  cf_mdm_last_seen                         Date & Time    mdm last seen
+  cf_mdm_os                                Text           mdm os
+
+  ── NESSUS ──
+  cf_nessus_hostname                       Text           nessus hostname
+  cf_nessus_ip                             Text           nessus ip
+  cf_nessus_last_scan                      Date & Time    nessus last scan
+  cf_nessus_mac                            Text           nessus mac
+
+  ── TERAMIND ──
+  cf_teramind_FQDN                         Text           teramind FQDN
+  cf_teramind_OS                           Text           teramind OS
+  cf_teramind_agent_version                Text           teramind agent version
+  cf_teramind_hostname                     Text           teramind hostname
+  cf_teramind_ip                           Text           teramind ip
+  cf_teramind_last_seen                    Date & Time    teramind last seen
+  cf_teramind_mac                          Text           teramind mac
+  cf_teramind_status                       Text           teramind status
+
+  ── TRELLIX ──
+  cf_trellix_agent_ver                     Text           trellix agent ver
+  cf_trellix_hostname                      Text           trellix hostname
+  cf_trellix_ip_address                    Text           trellix ip address
+  cf_trellix_last_seen                     Date & Time    trellix last seen
+  cf_trellix_mac                           Text           trellix mac
+  cf_trellix_malware_status                Text           trellix malware status
+  cf_trellix_os_version                    Text           trellix os version
+
+  ── VCENTER ──
+  cf_vcenter_host                          Text           vcenter host
+  cf_vcenter_hostname                      Text           vcenter hostname
+  cf_vcenter_ip                            Text           vcenter ip
+  cf_vcenter_last_seen                     Date & Time    vcenter last seen
+  cf_vcenter_name                          Text           vcenter name
+  cf_vcenter_power_state                   Text           vcenter power state
+
+  ── WAZUH ──
+  cf_wazuh_agent_id                        Text           wazuh agent id
+  cf_wazuh_agent_ver                       Text           wazuh agent ver
+  cf_wazuh_hostname                        Text           wazuh hostname
+  cf_wazuh_ip                              Text           wazuh ip
+  cf_wazuh_last_seen                       Date & Time    wazuh last seen
+  cf_wazuh_os                              Text           wazuh os
+  cf_wazuh_status                          Text           wazuh status
+
+  ── WSUS ──
+  cf_wsus_hostname                         Text           wsus hostname
+  cf_wsus_ip                               Text           wsus ip
+  cf_wsus_last_reported                    Date & Time    wsus last reported
+  cf_wsus_last_sync                        Date & Time    wsus last sync

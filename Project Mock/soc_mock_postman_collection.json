@@ -1,0 +1,100 @@
+{
+  "info": {
+    "name": "SOC API Mock Collection",
+    "_postman_id": "soc-mock-collection-001",
+    "description": "Mock endpoints for Tenable, Fortinet, Elastic, Wazuh, AD, WSUS, EDR",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Tenable",
+      "item": [
+        {
+          "name": "Get Scans",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/nessus/scans"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "body": "{\n  \"scans\": [\n    {\n      \"id\": 101,\n      \"name\": \"Weekly Scan\",\n      \"status\": \"completed\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "FortiGate",
+      "item": [
+        {
+          "name": "System Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/fortigate/system/status"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "body": "{\n  \"status\": \"up\",\n  \"hostname\": \"FGT-01\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Elastic",
+      "item": [
+        {
+          "name": "Search Logs",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/elastic/_search"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "body": "{\n  \"hits\": {\n    \"total\": 1,\n    \"hits\": [\n      {\n        \"_source\": {\n          \"message\": \"test log\"\n        }\n      }\n    ]\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wazuh",
+      "item": [
+        {
+          "name": "Get Alerts",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wazuh/alerts"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "body": "{\n  \"alerts\": [\n    {\n      \"id\": \"a1\",\n      \"rule\": \"SSH login\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Active Directory",
+      "item": [
+        {
+          "name": "Get Users",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/ad/users"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "body": "{\n  \"users\": [\n    {\n      \"id\": \"u1\",\n      \"name\": \"admin\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
