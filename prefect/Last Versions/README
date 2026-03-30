@@ -1,0 +1,78 @@
+SOC Inventory Automation
+========================
+
+soc_inventory/
+│
+├── config/                         ← EDIT THESE — never touch the Python files for client changes
+│   ├── playbook.yaml               ← clients · sites · tools · which Prefect block per tool
+│   └── field_map.yaml              ← tool applicability · match keys · Netbox custom field mapping
+│
+├── runner/                         ← engine — do not edit unless changing core behaviour
+│   ├── __init__.py
+│   ├── netbox_client.py            ← queries Netbox, matches devices, PATCHes custom fields
+│   ├── field_map_loader.py         ← reads field_map.yaml, answers applicability questions
+│   ├── run_task.py                 ← one Prefect task = one client/site/tool combination
+│   ├── orphan_collector.py         ← accumulates unmatched records across all tasks
+│   └── orphan_report.py            ← generates HTML + CSV orphan report
+│
+├── flows/                          ← Prefect flow definitions
+│   ├── __init__.py
+│   └── soc_inventory_flow.py       ← master flow: load playbook → dispatch tasks → report
+│
+├── scripts/                        ← one file per tool — ONLY file you add when onboarding a new tool
+│   ├── __init__.py
+│   ├── ad_inventory.py             ← DONE
+│   ├── trellix_inventory.py        ← DONE
+│   ├── wsus_inventory.py           ← PENDING
+│   ├── wazuh_inventory.py          ← PENDING
+│   ├── elastic_inventory.py        ← PENDING
+│   ├── nessus_inventory.py         ← PENDING
+│   ├── fortigate_inventory.py      ← PENDING
+│   ├── vcenter_inventory.py        ← PENDING
+│   ├── glpi_inventory.py           ← PENDING
+│   ├── teramind_inventory.py       ← PENDING
+│   └── mdm_inventory.py            ← PENDING
+│
+├── tests/                          ← standalone test scripts (no Prefect needed)
+│   ├── __init__.py
+│   ├── test_trellix.py             ← DONE
+│   └── test_<tool>.py              ← add one per script before wiring into Prefect
+│
+├── reports/                        ← orphan reports saved here after each run
+│   └── (generated at runtime)
+│
+├── playbook_loader.py              ← reads playbook.yaml → flat list of ResolvedTask objects
+├── create_blocks.py                ← one-time: register all credentials in Prefect vault
+├── prefect.yaml                    ← deployment config: schedules, work pool, parameters
+├── requirements.txt                ← Python dependencies
+├── SETUP.sh                        ← step-by-step Prefect on-premise setup guide
+└── README                          ← this file
+
+SCRIPT CONTRACT
+---------------
+Every script in scripts/ must expose exactly:
+
+    async def fetch(credentials: dict, **params) -> dict[str, dict]
+
+- keyed by hostname (lowercased, no domain suffix)
+- values must contain the keys defined in field_map.yaml fields: section
+- return None for fields you cannot populate — runner skips nulls
+- no Netbox imports, no client logic, no hardcoded values
+
+ADDING A NEW CLIENT
+-------------------
+1. Add tenant + sites to Netbox (slugs must match what you put in playbook)
+2. Add entry to config/playbook.yaml
+3. Add credential blocks to create_blocks.py and run it
+4. prefect deploy --all
+→ next run picks it up automatically
+
+ADDING A NEW TOOL
+-----------------
+1. Write scripts/{tool}_inventory.py
+2. Write tests/test_{tool}.py — verify it works without Prefect
+3. Add tool entry to config/field_map.yaml
+4. Register in runner/run_task.py SCRIPT_REGISTRY dict
+5. Add to relevant sites in config/playbook.yaml
+6. Add credential blocks to create_blocks.py and run it
+7. prefect deploy --all
