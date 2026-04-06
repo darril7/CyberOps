@@ -1,0 +1,447 @@
+meta:
+  generated_at: '2026-04-02T05:19:49Z'
+  netbox_url: https://netbox.reduno.online
+  object_type: dcim.device
+choice_sets:
+  SOC_CIS_App_Benchmark:
+    name: SOC_CIS_App_Benchmark
+    description: CIS benchmark at the service or application layer — independent of
+      the OS benchmark.
+    choices: &id005
+    - value: '[''CIS-APACHE'', ''CIS Apache HTTP Server'']'
+      label: '[''CIS-APACHE'', ''CIS Apache HTTP Server'']'
+    - value: '[''CIS-NGINX'', ''CIS Nginx'']'
+      label: '[''CIS-NGINX'', ''CIS Nginx'']'
+    - value: '[''CIS-IIS'', ''CIS IIS'']'
+      label: '[''CIS-IIS'', ''CIS IIS'']'
+    - value: '[''CIS-MYSQL'', ''CIS MySQL'']'
+      label: '[''CIS-MYSQL'', ''CIS MySQL'']'
+    - value: '[''CIS-MSSQL'', ''CIS Microsoft SQL Server'']'
+      label: '[''CIS-MSSQL'', ''CIS Microsoft SQL Server'']'
+    - value: '[''CIS-PGSQL'', ''CIS PostgreSQL'']'
+      label: '[''CIS-PGSQL'', ''CIS PostgreSQL'']'
+    - value: '[''CIS-ORACLE'', ''CIS Oracle Database'']'
+      label: '[''CIS-ORACLE'', ''CIS Oracle Database'']'
+    - value: '[''CIS-EXCHANGE'', ''CIS Microsoft Exchange'']'
+      label: '[''CIS-EXCHANGE'', ''CIS Microsoft Exchange'']'
+    - value: '[''CIS-AD'', ''CIS Active Directory'']'
+      label: '[''CIS-AD'', ''CIS Active Directory'']'
+    - value: '[''VENDOR-GUIDE'', ''Vendor Hardening Guide'']'
+      label: '[''VENDOR-GUIDE'', ''Vendor Hardening Guide'']'
+    - value: '[''CUSTOM'', ''Custom Baseline (Manual Definition)'']'
+      label: '[''CUSTOM'', ''Custom Baseline (Manual Definition)'']'
+    - value: '[''NO-STANDARD'', ''No Standard Exists'']'
+      label: '[''NO-STANDARD'', ''No Standard Exists'']'
+    - value: '[''NA'', ''N/A — No App-Level Service'']'
+      label: '[''NA'', ''N/A — No App-Level Service'']'
+    - value: '[''OTHER'', ''Other — Not Listed (specify in notes)'']'
+      label: '[''OTHER'', ''Other — Not Listed (specify in notes)'']'
+  SOC_CIS_OS_Benchmark:
+    name: SOC_CIS_OS_Benchmark
+    description: CIS benchmark applicable at the OS level. Populated from the OS field
+      during onboarding.
+    choices: &id002
+    - value: '[''CIS-WS2022'', ''CIS Windows Server 2022'']'
+      label: '[''CIS-WS2022'', ''CIS Windows Server 2022'']'
+    - value: '[''CIS-WS2019'', ''CIS Windows Server 2019'']'
+      label: '[''CIS-WS2019'', ''CIS Windows Server 2019'']'
+    - value: '[''CIS-WIN11'', ''CIS Windows 11'']'
+      label: '[''CIS-WIN11'', ''CIS Windows 11'']'
+    - value: '[''CIS-WIN10'', ''CIS Windows 10'']'
+      label: '[''CIS-WIN10'', ''CIS Windows 10'']'
+    - value: '[''CIS-UB2204'', ''CIS Ubuntu 22.04'']'
+      label: '[''CIS-UB2204'', ''CIS Ubuntu 22.04'']'
+    - value: '[''CIS-UB2004'', ''CIS Ubuntu 20.04'']'
+      label: '[''CIS-UB2004'', ''CIS Ubuntu 20.04'']'
+    - value: '[''CIS-RHEL9'', ''CIS RHEL 9'']'
+      label: '[''CIS-RHEL9'', ''CIS RHEL 9'']'
+    - value: '[''CIS-RHEL8'', ''CIS RHEL 8'']'
+      label: '[''CIS-RHEL8'', ''CIS RHEL 8'']'
+    - value: '[''CIS-DEB12'', ''CIS Debian 12'']'
+      label: '[''CIS-DEB12'', ''CIS Debian 12'']'
+    - value: '[''CIS-DEB11'', ''CIS Debian 11'']'
+      label: '[''CIS-DEB11'', ''CIS Debian 11'']'
+    - value: '[''CIS-AMZN2'', ''CIS Amazon Linux 2'']'
+      label: '[''CIS-AMZN2'', ''CIS Amazon Linux 2'']'
+    - value: '[''VENDOR-OS'', ''N/A — Appliance / Vendor-Managed OS'']'
+      label: '[''VENDOR-OS'', ''N/A — Appliance / Vendor-Managed OS'']'
+    - value: '[''OTHER'', ''Other — Not Listed (specify in notes)'']'
+      label: '[''OTHER'', ''Other — Not Listed (specify in notes)'']'
+  SOC_CIS_Profile:
+    name: SOC_CIS_Profile
+    description: CIS hardening profile level.
+    choices: &id003
+    - value: '[''L1'', ''Level 1 — Baseline'']'
+      label: '[''L1'', ''Level 1 — Baseline'']'
+    - value: '[''L2'', ''Level 2 — High Security'']'
+      label: '[''L2'', ''Level 2 — High Security'']'
+    - value: '[''STIG'', ''STIG — DoD Aligned'']'
+      label: '[''STIG'', ''STIG — DoD Aligned'']'
+    - value: '[''PENDING'', ''Pending Definition'']'
+      label: '[''PENDING'', ''Pending Definition'']'
+  SOC_DeviceFunction:
+    name: SOC_DeviceFunction
+    description: Primary operational role of a device.
+    choices: &id001
+    - value: '[''SRV-HV'', ''SRV-HV — Hypervisor'']'
+      label: '[''SRV-HV'', ''SRV-HV — Hypervisor'']'
+    - value: '[''SRV-DC'', ''SRV-DC — Domain Controller'']'
+      label: '[''SRV-DC'', ''SRV-DC — Domain Controller'']'
+    - value: '[''SRV-DB'', ''SRV-DB — Database Server'']'
+      label: '[''SRV-DB'', ''SRV-DB — Database Server'']'
+    - value: '[''SRV-WEB'', ''SRV-WEB — Web Server'']'
+      label: '[''SRV-WEB'', ''SRV-WEB — Web Server'']'
+    - value: '[''SRV-APP'', ''SRV-APP — Business Application Server'']'
+      label: '[''SRV-APP'', ''SRV-APP — Business Application Server'']'
+    - value: '[''SRV-MAIL'', ''SRV-MAIL — Mail Server'']'
+      label: '[''SRV-MAIL'', ''SRV-MAIL — Mail Server'']'
+    - value: '[''SRV-FILE'', ''SRV-FILE — File Server'']'
+      label: '[''SRV-FILE'', ''SRV-FILE — File Server'']'
+    - value: '[''SRV-PROXY'', ''SRV-PROXY — Proxy / Reverse Proxy'']'
+      label: '[''SRV-PROXY'', ''SRV-PROXY — Proxy / Reverse Proxy'']'
+    - value: '[''SRV-MON'', ''SRV-MON — Monitoring / SIEM Server'']'
+      label: '[''SRV-MON'', ''SRV-MON — Monitoring / SIEM Server'']'
+    - value: '[''SRV-BACKUP'', ''SRV-BACKUP — Backup Server'']'
+      label: '[''SRV-BACKUP'', ''SRV-BACKUP — Backup Server'']'
+    - value: '[''WRK-STD'', ''WRK-STD — Standard Workstation'']'
+      label: '[''WRK-STD'', ''WRK-STD — Standard Workstation'']'
+    - value: '[''WRK-DEV'', ''WRK-DEV — Developer Workstation'']'
+      label: '[''WRK-DEV'', ''WRK-DEV — Developer Workstation'']'
+    - value: '[''WRK-PAW'', ''WRK-PAW — Privileged Access Workstation'']'
+      label: '[''WRK-PAW'', ''WRK-PAW — Privileged Access Workstation'']'
+    - value: '[''APL-FW'', ''APL-FW — Firewall'']'
+      label: '[''APL-FW'', ''APL-FW — Firewall'']'
+    - value: '[''APL-SW'', ''APL-SW — Switch / Network Device'']'
+      label: '[''APL-SW'', ''APL-SW — Switch / Network Device'']'
+    - value: '[''APL-WAF'', ''APL-WAF — Web Application Firewall'']'
+      label: '[''APL-WAF'', ''APL-WAF — Web Application Firewall'']'
+    - value: '[''APL-IDS'', ''APL-IDS — IDS / IPS'']'
+      label: '[''APL-IDS'', ''APL-IDS — IDS / IPS'']'
+    - value: '[''APL-PROXY'', ''APL-PROXY — Proxy Appliance'']'
+      label: '[''APL-PROXY'', ''APL-PROXY — Proxy Appliance'']'
+    - value: '[''OTHER'', ''Other — Not Listed (Manual Review Required)'']'
+      label: '[''OTHER'', ''Other — Not Listed (Manual Review Required)'']'
+  SOC_HardeningStatus:
+    name: SOC_HardeningStatus
+    description: Hardening validation status shared across OS and App hardening tracks.
+      Not Started = registered, no action taken.
+    choices: &id004
+    - value: '[''NOT-STARTED'', ''Not Started'']'
+      label: '[''NOT-STARTED'', ''Not Started'']'
+    - value: '[''IN-PROGRESS'', ''In Progress'']'
+      label: '[''IN-PROGRESS'', ''In Progress'']'
+    - value: '[''VALIDATED'', ''Validated'']'
+      label: '[''VALIDATED'', ''Validated'']'
+    - value: '[''EXCEPTION'', ''Exception — Notes Required'']'
+      label: '[''EXCEPTION'', ''Exception — Notes Required'']'
+    - value: '[''NA'', ''N/A'']'
+      label: '[''NA'', ''N/A'']'
+  SOC_LogCollectionStatus:
+    name: SOC_LogCollectionStatus
+    description: Current log collection state for this device.
+    choices: &id006
+    - value: '[''NOT-CONFIGURED'', ''Not Configured'']'
+      label: '[''NOT-CONFIGURED'', ''Not Configured'']'
+    - value: '[''PARTIAL'', ''Partial — Agent deployed, gaps remain'']'
+      label: '[''PARTIAL'', ''Partial — Agent deployed, gaps remain'']'
+    - value: '[''FULL'', ''Full — All categories ingesting'']'
+      label: '[''FULL'', ''Full — All categories ingesting'']'
+    - value: '[''VALIDATED'', ''Validated — Sigma rules confirmed active'']'
+      label: '[''VALIDATED'', ''Validated — Sigma rules confirmed active'']'
+  SOC_LogCollector:
+    name: SOC_LogCollector
+    description: Agent or mechanism forwarding logs to the SIEM for this device.
+    choices: &id007
+    - value: '[''WAZUH'', ''Wazuh Agent'']'
+      label: '[''WAZUH'', ''Wazuh Agent'']'
+    - value: '[''ELASTIC'', ''Elastic Agent'']'
+      label: '[''ELASTIC'', ''Elastic Agent'']'
+    - value: '[''WINLOGBEAT'', ''Winlogbeat'']'
+      label: '[''WINLOGBEAT'', ''Winlogbeat'']'
+    - value: '[''SYSLOG'', ''Syslog (UDP/TCP)'']'
+      label: '[''SYSLOG'', ''Syslog (UDP/TCP)'']'
+    - value: '[''FORTIMAIL'', ''FortiMail Connector'']'
+      label: '[''FORTIMAIL'', ''FortiMail Connector'']'
+    - value: '[''TRELLIX'', ''Trellix EDR'']'
+      label: '[''TRELLIX'', ''Trellix EDR'']'
+    - value: '[''VENDOR-API'', ''Vendor API'']'
+      label: '[''VENDOR-API'', ''Vendor API'']'
+    - value: '[''NONE'', ''None'']'
+      label: '[''NONE'', ''None'']'
+    - value: '[''OTHER'', ''Other — Not Listed (specify in notes)'']'
+      label: '[''OTHER'', ''Other — Not Listed (specify in notes)'']'
+  SOC_SigmaLogCategories:
+    name: SOC_SigmaLogCategories
+    description: Sigma log category types collected from this device.
+    choices: &id008
+    - value: '[''process_creation'', ''process_creation'']'
+      label: '[''process_creation'', ''process_creation'']'
+    - value: '[''network_connection'', ''network_connection'']'
+      label: '[''network_connection'', ''network_connection'']'
+    - value: '[''authentication'', ''authentication'']'
+      label: '[''authentication'', ''authentication'']'
+    - value: '[''file_change'', ''file_change'']'
+      label: '[''file_change'', ''file_change'']'
+    - value: '[''registry'', ''registry'']'
+      label: '[''registry'', ''registry'']'
+    - value: '[''web'', ''web'']'
+      label: '[''web'', ''web'']'
+    - value: '[''database'', ''database'']'
+      label: '[''database'', ''database'']'
+    - value: '[''dns'', ''dns'']'
+      label: '[''dns'', ''dns'']'
+    - value: '[''firewall'', ''firewall'']'
+      label: '[''firewall'', ''firewall'']'
+    - value: '[''email'', ''email'']'
+      label: '[''email'', ''email'']'
+    - value: '[''scheduled_task'', ''scheduled_task'']'
+      label: '[''scheduled_task'', ''scheduled_task'']'
+    - value: '[''service_installation'', ''service_installation'']'
+      label: '[''service_installation'', ''service_installation'']'
+    - value: '[''powershell'', ''powershell'']'
+      label: '[''powershell'', ''powershell'']'
+    - value: '[''wmi_event'', ''wmi_event'']'
+      label: '[''wmi_event'', ''wmi_event'']'
+    - value: '[''custom'', ''custom — Non-standard category (see business_app_log_path)'']'
+      label: '[''custom'', ''custom — Non-standard category (see business_app_log_path)'']'
+  SOC_SigmaProduct:
+    name: SOC_SigmaProduct
+    description: Sigma product tag(s) for this device — matches the 'product' field
+      in Sigma rule definitions.
+    choices: &id009
+    - value: '[''windows'', ''windows'']'
+      label: '[''windows'', ''windows'']'
+    - value: '[''linux'', ''linux'']'
+      label: '[''linux'', ''linux'']'
+    - value: '[''active_directory'', ''active_directory'']'
+      label: '[''active_directory'', ''active_directory'']'
+    - value: '[''iis'', ''iis'']'
+      label: '[''iis'', ''iis'']'
+    - value: '[''apache'', ''apache'']'
+      label: '[''apache'', ''apache'']'
+    - value: '[''nginx'', ''nginx'']'
+      label: '[''nginx'', ''nginx'']'
+    - value: '[''mysql'', ''mysql'']'
+      label: '[''mysql'', ''mysql'']'
+    - value: '[''mssql'', ''mssql'']'
+      label: '[''mssql'', ''mssql'']'
+    - value: '[''postgresql'', ''postgresql'']'
+      label: '[''postgresql'', ''postgresql'']'
+    - value: '[''oracle'', ''oracle'']'
+      label: '[''oracle'', ''oracle'']'
+    - value: '[''exchange'', ''exchange'']'
+      label: '[''exchange'', ''exchange'']'
+    - value: '[''postfix'', ''postfix'']'
+      label: '[''postfix'', ''postfix'']'
+    - value: '[''palo-alto'', ''palo-alto'']'
+      label: '[''palo-alto'', ''palo-alto'']'
+    - value: '[''fortinet'', ''fortinet'']'
+      label: '[''fortinet'', ''fortinet'']'
+    - value: '[''cisco'', ''cisco'']'
+      label: '[''cisco'', ''cisco'']'
+    - value: '[''elastic'', ''elastic'']'
+      label: '[''elastic'', ''elastic'']'
+    - value: '[''wazuh'', ''wazuh'']'
+      label: '[''wazuh'', ''wazuh'']'
+    - value: '[''samba'', ''samba'']'
+      label: '[''samba'', ''samba'']'
+    - value: '[''squid'', ''squid'']'
+      label: '[''squid'', ''squid'']'
+    - value: '[''suricata'', ''suricata'']'
+      label: '[''suricata'', ''suricata'']'
+    - value: '[''custom'', ''custom — Non-standard app (see business_app_log_path)'']'
+      label: '[''custom'', ''custom — Non-standard app (see business_app_log_path)'']'
+    - value: '[''na'', ''N/A — Vendor Syslog / Outside Sigma'']'
+      label: '[''na'', ''N/A — Vendor Syslog / Outside Sigma'']'
+custom_fields:
+- name: Environment
+  label: Environment
+  type: multiselect
+  required: false
+  description: ''
+  group: ''
+  choice_set: environment
+  choices: []
+- name: dns_name
+  label: DNS name
+  type: text
+  required: false
+  description: DNS Name in domain
+  group: ''
+  choice_set: ''
+  choices: []
+- name: operating_system
+  label: Operating System
+  type: text
+  required: false
+  description: ''
+  group: ''
+  choice_set: ''
+  choices: []
+- name: os_version
+  label: Operating System Version
+  type: text
+  required: false
+  description: ''
+  group: ''
+  choice_set: ''
+  choices: []
+- name: device_function
+  label: Device Function
+  type: select
+  required: false
+  description: Primary operational role of the device.
+  group: 1 - Device Classification
+  choice_set: SOC_DeviceFunction
+  choices: *id001
+- name: internet_facing
+  label: Internet Facing
+  type: boolean
+  required: false
+  description: Is this device directly reachable from the internet?
+  group: 1 - Device Classification
+  choice_set: ''
+  choices: []
+- name: specific_product
+  label: Specific Product or Application
+  type: text
+  required: false
+  description: Free-text field for the actual software product running the primary
+    service.
+  group: 1 - Device Classification
+  choice_set: ''
+  choices: []
+- name: cis_os_benchmark
+  label: CIS OS Benchmark
+  type: select
+  required: false
+  description: CIS benchmark applied at the OS level — always populated for servers
+    and workstations, regardless of what service runs on top
+  group: 2 - OS Hardening (CIS)
+  choice_set: SOC_CIS_OS_Benchmark
+  choices: *id002
+- name: cis_os_profile
+  label: CIS OS Hardening Profile
+  type: select
+  required: false
+  description: CIS hardening level for the OS layer.
+  group: 2 - OS Hardening (CIS)
+  choice_set: SOC_CIS_Profile
+  choices: *id003
+- name: cis_os_status
+  label: CIS OS Hardening Status
+  type: select
+  required: false
+  description: Validation progress for OS-level hardening.
+  group: 2 - OS Hardening (CIS)
+  choice_set: SOC_HardeningStatus
+  choices: *id004
+- name: cis_app_benchmark
+  label: CIS Application Benchmark
+  type: select
+  required: false
+  description: CIS benchmark at the application or service layer — tracked independently
+    from the OS benchmark.
+  group: 3 - Application Hardening (CIS)
+  choice_set: SOC_CIS_App_Benchmark
+  choices: *id005
+- name: cis_app_status
+  label: CIS Application Hardening Status
+  type: select
+  required: false
+  description: Validation progress for app-level hardening — fully independent from
+    cis_os_status.
+  group: 3 - Application Hardening (CIS)
+  choice_set: SOC_HardeningStatus
+  choices: *id004
+- name: hardening_exception_notes
+  label: Hardening Exception Notes
+  type: text
+  required: false
+  description: Required when cis_os_status or cis_app_status = Exception.
+  group: 3 - Application Hardening (CIS)
+  choice_set: ''
+  choices: []
+- name: business_app_log_path
+  label: Business App Log Path
+  type: text
+  required: false
+  description: Populated when device_function=SRV-APP or sigma_product=custom.
+  group: 4 - Log Collection (Sigma)
+  choice_set: ''
+  choices: []
+- name: log_collection_status
+  label: Log Collection Status
+  type: select
+  required: false
+  description: Current state of log collection for this device.
+  group: 4 - Log Collection (Sigma)
+  choice_set: SOC_LogCollectionStatus
+  choices: *id006
+- name: log_collector
+  label: Log Collector / Agent
+  type: multiselect
+  required: false
+  description: The agent or forwarding mechanism in use for this device.
+  group: 4 - Log Collection (Sigma)
+  choice_set: SOC_LogCollector
+  choices: *id007
+- name: sigma_log_categories
+  label: Sigma Log Categories
+  type: multiselect
+  required: false
+  description: Sigma 'category' values for event types that must be collected from
+    this device.
+  group: 4 - Log Collection (Sigma)
+  choice_set: SOC_SigmaLogCategories
+  choices: *id008
+- name: sigma_product
+  label: Sigma Product Tags
+  type: multiselect
+  required: false
+  description: Sigma 'product' field value(s) for this device — tells the SIEM which
+    detection rulesets to activate.
+  group: 4 - Log Collection (Sigma)
+  choice_set: SOC_SigmaProduct
+  choices: *id009
+sites:
+- slug: c1-dc1
+  name: c1-dc1
+- slug: c1-dc2
+  name: c1-dc2
+- slug: c1-office1
+  name: c1-office1
+- slug: c2-dc1
+  name: c2-dc1
+- slug: c2-office1
+  name: c2-office1
+- slug: c3-dc1
+  name: c3-dc1
+- slug: c3-dc2
+  name: c3-dc2
+- slug: c3-dc3
+  name: c3-dc3
+- slug: c4-office1
+  name: c4-office1
+- slug: c5-dc1
+  name: c5-dc1
+- slug: c5-office1
+  name: c5-office1
+- slug: c5-office2
+  name: c5-office2
+- slug: c6-office1
+  name: c6-office1
+- slug: c6-office2
+  name: c6-office2
+- slug: c7-dc1
+  name: c7-dc1
+- slug: c7-office1
+  name: c7-office1
+- slug: cyber-dc1
+  name: cyber-dc1
+- slug: cyber-office1
+  name: cyber-office1
+- slug: tp1-office1
+  name: tp1-office1
+- slug: tp3-office1
+  name: tp3-office1

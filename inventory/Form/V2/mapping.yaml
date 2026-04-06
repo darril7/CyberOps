@@ -1,0 +1,333 @@
+# =============================================================================
+# mapping.yaml — SOC Onboarding Mapping Configuration
+# =============================================================================
+# This file defines HOW form answers map to NetBox custom field values.
+# It is the ONLY place you edit when:
+#   - A new device function is added to SOC_DeviceFunction in NetBox
+#   - A new product needs a CIS benchmark or Sigma tag
+#   - A new appliance type is added
+#   - Escalation rules change
+#
+# After any edit here, just re-run:
+#   python netbox_schema_pull.py
+#
+# The generated HTML and YAML will reflect your changes automatically.
+# Never edit the generated device_onboarding_form.html directly.
+# =============================================================================
+
+
+# ── OS → CIS OS Benchmark ────────────────────────────────────────────────────
+# Key   = OS string shown in the form dropdown (must match exactly)
+# Value = choice key in SOC_CIS_OS_Benchmark choice set in NetBox
+os_to_cis_benchmark:
+  "Windows Server 2022": "CIS-WS2022"
+  "Windows Server 2019": "CIS-WS2019"
+  "Windows Server 2016": "CIS-WS2019"
+  "Windows 11":          "CIS-WIN11"
+  "Windows 10":          "CIS-WIN10"
+  "Ubuntu 22.04":        "CIS-UB2204"
+  "Ubuntu 20.04":        "CIS-UB2004"
+  "RHEL 9":              "CIS-RHEL9"
+  "RHEL 8":              "CIS-RHEL8"
+  "Debian 12":           "CIS-DEB12"
+  "Debian 11":           "CIS-DEB11"
+  "Amazon Linux 2":      "CIS-AMZN2"
+  "N/A (Appliance)":     "VENDOR-OS"
+  "Other":               "OTHER"
+  # Add new OS versions here:
+  # "Windows Server 2025": "CIS-WS2025"
+  # "Ubuntu 24.04":        "CIS-UB2404"
+
+
+# ── Product → CIS App Benchmark ──────────────────────────────────────────────
+# Key   = product name (case-insensitive match in code)
+# Value = choice key in SOC_CIS_App_Benchmark choice set in NetBox
+product_to_cis_app_benchmark:
+  apache:     "CIS-APACHE"
+  nginx:      "CIS-NGINX"
+  iis:        "CIS-IIS"
+  mysql:      "CIS-MYSQL"
+  mssql:      "CIS-MSSQL"
+  postgresql: "CIS-PGSQL"
+  oracle:     "CIS-ORACLE"
+  exchange:   "CIS-EXCHANGE"
+  postfix:    "NA"
+  # Add new products here:
+  # mariadb:  "CIS-MYSQL"
+  # tomcat:   "VENDOR-GUIDE"
+
+
+# ── Product → Sigma Product Tags ─────────────────────────────────────────────
+# Key   = product name (case-insensitive match in code)
+# Value = list of choice keys in SOC_SigmaProduct choice set in NetBox
+product_to_sigma:
+  apache:     ["linux", "apache"]
+  nginx:      ["linux", "nginx"]
+  iis:        ["windows", "iis"]
+  mysql:      ["linux", "mysql"]
+  mssql:      ["windows", "mssql"]
+  postgresql: ["linux", "postgresql"]
+  oracle:     ["linux", "oracle"]
+  exchange:   ["windows", "exchange"]
+  postfix:    ["linux", "postfix"]
+  # Add new products here:
+  # mariadb:  ["linux", "mysql"]
+  # tomcat:   ["linux", "apache"]
+
+
+# ── Server Roles ──────────────────────────────────────────────────────────────
+# Each entry maps a server role code to all derived NetBox custom fields.
+# Add a new entry here when a new code is added to SOC_DeviceFunction in NetBox.
+#
+# Fields:
+#   label               - display text on the form role card
+#   device_function     - value written to device_function CF in NetBox
+#   cis_app_benchmark   - value written to cis_app_benchmark CF
+#                         (set to "OTHER" when product_overrides: true)
+#   sigma_product       - list of sigma_product values
+#                         (set to [] when product_overrides: true)
+#   sigma_log_categories- list of sigma_log_categories values
+#   product_overrides   - true = cis_app_benchmark and sigma_product are
+#                         replaced by product_to_* lookups from Q2 answer
+#   flag_log_path       - true = business_app_log_path flagged PENDING for Blue Team
+#   import_status       - omit for "Ready", set "REVIEW NEEDED" to block import
+server_roles:
+  SRV-DC:
+    label:                "Domain Controller"
+    device_function:      "SRV-DC"
+    cis_app_benchmark:    "CIS-AD"
+    sigma_product:        ["windows", "active_directory"]
+    sigma_log_categories: ["process_creation", "authentication", "active_directory"]
+    product_overrides:    false
+
+  SRV-DB:
+    label:                "Database Server"
+    device_function:      "SRV-DB"
+    cis_app_benchmark:    "OTHER"
+    sigma_product:        []
+    sigma_log_categories: ["process_creation", "authentication", "database", "file_change"]
+    product_overrides:    true
+
+  SRV-WEB:
+    label:                "Web Server"
+    device_function:      "SRV-WEB"
+    cis_app_benchmark:    "OTHER"
+    sigma_product:        []
+    sigma_log_categories: ["process_creation", "authentication", "web", "network_connection"]
+    product_overrides:    true
+
+  SRV-APP:
+    label:                "Business Application"
+    device_function:      "SRV-APP"
+    cis_app_benchmark:    "CUSTOM"
+    sigma_product:        ["custom"]
+    sigma_log_categories: ["process_creation", "authentication", "custom"]
+    product_overrides:    false
+    flag_log_path:        true
+
+  SRV-MAIL:
+    label:                "Mail Server"
+    device_function:      "SRV-MAIL"
+    cis_app_benchmark:    "OTHER"
+    sigma_product:        []
+    sigma_log_categories: ["process_creation", "authentication", "email"]
+    product_overrides:    true
+
+  SRV-FILE:
+    label:                "File Server"
+    device_function:      "SRV-FILE"
+    cis_app_benchmark:    "NA"
+    sigma_product:        ["windows", "samba"]
+    sigma_log_categories: ["process_creation", "authentication", "file_change"]
+    product_overrides:    false
+
+  SRV-PROXY:
+    label:                "Proxy / Reverse Proxy"
+    device_function:      "SRV-PROXY"
+    cis_app_benchmark:    "NA"
+    sigma_product:        ["linux", "squid"]
+    sigma_log_categories: ["process_creation", "authentication", "network_connection", "web"]
+    product_overrides:    false
+
+  SRV-MON:
+    label:                "Monitoring / SIEM"
+    device_function:      "SRV-MON"
+    cis_app_benchmark:    "NA"
+    sigma_product:        ["linux", "elastic", "wazuh"]
+    sigma_log_categories: ["process_creation", "authentication"]
+    product_overrides:    false
+
+  SRV-BACKUP:
+    label:                "Backup Server"
+    device_function:      "SRV-BACKUP"
+    cis_app_benchmark:    "NA"
+    sigma_product:        ["linux"]
+    sigma_log_categories: ["process_creation", "authentication", "file_change"]
+    product_overrides:    false
+
+  OTHER:
+    label:                "Not Listed"
+    device_function:      "OTHER"
+    cis_app_benchmark:    "OTHER"
+    sigma_product:        ["custom"]
+    sigma_log_categories: ["process_creation", "authentication"]
+    product_overrides:    false
+    import_status:        "REVIEW NEEDED"
+
+  # ── Add new server roles here ──────────────────────────────────
+  # SRV-K8S:
+  #   label:                "Kubernetes Node"
+  #   device_function:      "SRV-K8S"
+  #   cis_app_benchmark:    "CIS-K8S"
+  #   sigma_product:        ["linux"]
+  #   sigma_log_categories: ["process_creation", "authentication", "network_connection"]
+  #   product_overrides:    false
+
+
+# ── Workstation Roles ─────────────────────────────────────────────────────────
+workstation_default: "WRK-STD"
+
+workstation_roles:
+  WRK-STD:
+    label:                "Standard User"
+    device_function:      "WRK-STD"
+    cis_app_benchmark:    "NA"
+    sigma_product:        ["windows"]
+    sigma_log_categories: ["process_creation", "authentication"]
+
+  WRK-DEV:
+    label:                "Developer"
+    device_function:      "WRK-DEV"
+    cis_app_benchmark:    "NA"
+    sigma_product:        ["windows"]
+    sigma_log_categories: ["process_creation", "authentication", "network_connection"]
+
+  WRK-PAW:
+    label:                "Privileged Access (PAW)"
+    device_function:      "WRK-PAW"
+    cis_app_benchmark:    "NA"
+    sigma_product:        ["windows"]
+    sigma_log_categories: ["process_creation", "authentication", "file_change", "registry", "powershell"]
+
+  # Add new workstation types here as needed
+
+
+# ── Appliance Roles ───────────────────────────────────────────────────────────
+appliance_roles:
+  APL-FW:
+    label:                "Firewall"
+    device_function:      "APL-FW"
+    cis_os_benchmark:     "VENDOR-OS"
+    cis_app_benchmark:    "VENDOR-GUIDE"
+    sigma_product:        ["fortinet"]
+    sigma_log_categories: ["firewall", "network_connection"]
+    log_collector:        "SYSLOG"
+
+  APL-SW:
+    label:                "Switch"
+    device_function:      "APL-SW"
+    cis_os_benchmark:     "VENDOR-OS"
+    cis_app_benchmark:    "VENDOR-GUIDE"
+    sigma_product:        ["cisco"]
+    sigma_log_categories: ["network_connection"]
+    log_collector:        "SYSLOG"
+
+  APL-WAF:
+    label:                "Web Application Firewall"
+    device_function:      "APL-WAF"
+    cis_os_benchmark:     "VENDOR-OS"
+    cis_app_benchmark:    "VENDOR-GUIDE"
+    sigma_product:        ["nginx"]
+    sigma_log_categories: ["web", "network_connection"]
+    log_collector:        "SYSLOG"
+
+  APL-IDS:
+    label:                "IDS / IPS"
+    device_function:      "APL-IDS"
+    cis_os_benchmark:     "VENDOR-OS"
+    cis_app_benchmark:    "VENDOR-GUIDE"
+    sigma_product:        ["suricata"]
+    sigma_log_categories: ["network_connection"]
+    log_collector:        "SYSLOG"
+
+  APL-PROXY:
+    label:                "Proxy Appliance"
+    device_function:      "APL-PROXY"
+    cis_os_benchmark:     "VENDOR-OS"
+    cis_app_benchmark:    "VENDOR-GUIDE"
+    sigma_product:        ["squid"]
+    sigma_log_categories: ["web", "network_connection"]
+    log_collector:        "SYSLOG"
+
+  OTHER:
+    label:                "Not Listed"
+    device_function:      "OTHER"
+    cis_os_benchmark:     "VENDOR-OS"
+    cis_app_benchmark:    "VENDOR-GUIDE"
+    sigma_product:        ["custom"]
+    sigma_log_categories: ["network_connection"]
+    log_collector:        "SYSLOG"
+    import_status:        "REVIEW NEEDED"
+
+  # Add new appliance types here:
+  # APL-LB:
+  #   label:                "Load Balancer"
+  #   device_function:      "APL-LB"
+  #   cis_os_benchmark:     "VENDOR-OS"
+  #   cis_app_benchmark:    "VENDOR-GUIDE"
+  #   sigma_product:        ["nginx"]
+  #   sigma_log_categories: ["web", "network_connection"]
+  #   log_collector:        "SYSLOG"
+
+
+# ── Escalation Rules ─────────────────────────────────────────────────────────
+# Applied on top of the base role mapping when any listed form field
+# matches any listed value.
+escalation:
+  fields: ["internet_facing", "sensitive_data"]
+  values: ["Yes"]
+  overrides:
+    cis_os_profile: "L2"
+  append_sigma_categories: ["network_connection"]
+
+
+# ── Default Field Values ──────────────────────────────────────────────────────
+# Starting state written to every device on import.
+# Updated later by Ansible (hardening) and Blue Team (log collection).
+defaults:
+  cis_os_profile:            "L1"
+  cis_os_status:             "NOT-STARTED"
+  cis_app_status:            "NOT-STARTED"
+  log_collection_status:     "NOT-CONFIGURED"
+  log_collector:             "NONE"
+  hardening_exception_notes: ""
+  business_app_log_path:     ""
+
+
+# ── NetBox Field Name Registry ────────────────────────────────────────────────
+# Maps logical names to actual NetBox custom field names.
+# If you rename a custom field in NetBox, update only this section.
+# Everything else picks up the rename automatically on next pull.
+field_names:
+  device_function:            "device_function"
+  internet_facing:            "internet_facing"
+  specific_product:           "specific_product"
+  cis_os_benchmark:           "cis_os_benchmark"
+  cis_os_profile:             "cis_os_profile"
+  cis_os_status:              "cis_os_status"
+  cis_app_benchmark:          "cis_app_benchmark"
+  cis_app_status:             "cis_app_status"
+  hardening_exception_notes:  "hardening_exception_notes"
+  sigma_product:              "sigma_product"
+  sigma_log_categories:       "sigma_log_categories"
+  log_collection_status:      "log_collection_status"
+  log_collector:              "log_collector"
+  business_app_log_path:      "business_app_log_path"
+
+
+# ── Multiselect Fields ────────────────────────────────────────────────────────
+# Fields that accept a list of values in NetBox (comma-separated in Excel).
+# Add here if you create new multiselect custom fields in NetBox.
+multiselect_fields:
+  - sigma_product
+  - sigma_log_categories
